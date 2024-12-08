@@ -1,21 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { YearSelector } from "@/components/bookings/YearSelector";
+import { BookingSourceCard } from "@/components/bookings/BookingSourceCard";
+import { BookingDetails } from "@/components/bookings/BookingDetails";
 
 export default function Bookings() {
   const navigate = useNavigate();
   const [showDetails, setShowDetails] = useState(false);
   const [selectedSource, setSelectedSource] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(2025); // Default to 2025
+
+  // Available years for selection
+  const availableYears = [2023, 2024, 2025];
 
   // Check authentication
   useEffect(() => {
@@ -29,40 +28,35 @@ export default function Bookings() {
     checkAuth();
   }, [navigate]);
 
-  // Query for yearly statistics to get accurate total bookings and cancellations
+  // Query for yearly statistics
   const { data: yearlyStats } = useQuery({
-    queryKey: ['yearlyStats'],
+    queryKey: ['yearlyStats', selectedYear],
     queryFn: async () => {
-      console.log('Fetching yearly statistics');
+      console.log('Fetching yearly statistics for year:', selectedYear);
       const { data, error } = await supabase
         .from('yearly_statistics')
         .select('*')
-        .order('year', { ascending: false })
-        .limit(1);
+        .eq('year', selectedYear)
+        .single();
       
       if (error) {
         console.error('Error fetching yearly statistics:', error);
         throw error;
       }
       console.log('Yearly statistics:', data);
-      return data[0];
+      return data;
     }
   });
 
-  // Query for Booking.com data using the year from yearly statistics
+  // Query for Booking.com data
   const { data: bookingComData } = useQuery({
-    queryKey: ['bookingComData', yearlyStats?.year],
+    queryKey: ['bookingComData', selectedYear],
     queryFn: async () => {
-      if (!yearlyStats?.year) {
-        console.log('No year available from yearly statistics yet');
-        return null;
-      }
-      
-      console.log('Fetching Booking.com data for year:', yearlyStats.year);
+      console.log('Fetching Booking.com data for year:', selectedYear);
       const { data, error } = await supabase
         .from('Booking.com Data')
         .select('*')
-        .eq('Year', yearlyStats.year);
+        .eq('Year', selectedYear);
       
       if (error) {
         console.error('Error fetching Booking.com data:', error);
@@ -70,8 +64,7 @@ export default function Bookings() {
       }
       console.log('Booking.com data:', data);
       return data;
-    },
-    enabled: !!yearlyStats?.year // Only run query when we have the year
+    }
   });
 
   // Calculate totals and percentages
@@ -96,100 +89,34 @@ export default function Bookings() {
     setShowDetails(true);
   };
 
-  // Render details based on selected source
-  const renderSourceDetails = () => {
-    if (!selectedSource) return null;
-
-    if (selectedSource.name === 'Booking.com') {
-      return (
-        <div className="space-y-4">
-          {bookingComData?.map((booking, index) => (
-            <Card key={`${booking.Country}-${index}`}>
-              <CardHeader>
-                <CardTitle>{booking.Country}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div>
-                  <p className="text-sm text-muted-foreground">Reservations</p>
-                  <p className="text-lg font-semibold">{booking.Reservations}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Average Daily Rate</p>
-                  <p className="text-lg font-semibold">{booking.Avg_Daily_Rate}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Booking Window</p>
-                  <p className="text-lg font-semibold">{booking.Avg_Book_Window} days</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      );
-    }
-
-    return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Room Type</TableHead>
-            <TableHead>Guest</TableHead>
-            <TableHead>Revenue</TableHead>
-            <TableHead>Season</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          <TableRow>
-            <TableCell colSpan={4} className="text-center">
-              Total Direct Bookings: {directBookingsTotal}
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-    );
-  };
-
   return (
     <div className="space-y-8 p-8">
-      <h1 className="text-3xl font-bold">Source of Bookings</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Source of Bookings</h1>
+        <YearSelector
+          selectedYear={selectedYear}
+          onYearChange={setSelectedYear}
+          availableYears={availableYears}
+        />
+      </div>
       
       {/* Booking Sources Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card 
-          className="cursor-pointer hover:shadow-lg transition-shadow"
+        <BookingSourceCard
+          title="Booking.com"
+          total={bookingComTotal}
+          percentage={bookingComPercentage}
+          totalBookings={totalBookings}
           onClick={() => handleSourceClick({ name: 'Booking.com' })}
-        >
-          <CardHeader>
-            <CardTitle>Booking.com</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold">{bookingComTotal}</div>
-            <p className="text-muted-foreground">
-              {bookingComPercentage.toFixed(1)}% of total bookings
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Total bookings: {totalBookings}
-            </p>
-          </CardContent>
-        </Card>
+        />
 
-        <Card 
-          className="cursor-pointer hover:shadow-lg transition-shadow"
+        <BookingSourceCard
+          title="Direct Bookings"
+          total={directBookingsTotal}
+          percentage={directBookingsPercentage}
+          totalBookings={totalBookings}
           onClick={() => handleSourceClick({ name: 'Direct Bookings' })}
-        >
-          <CardHeader>
-            <CardTitle>Direct Bookings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold">{directBookingsTotal}</div>
-            <p className="text-muted-foreground">
-              {directBookingsPercentage.toFixed(1)}% of total bookings
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Total bookings: {totalBookings}
-            </p>
-          </CardContent>
-        </Card>
+        />
       </div>
 
       {/* Details Dialog */}
@@ -200,7 +127,11 @@ export default function Bookings() {
               {selectedSource?.name} Details
             </DialogTitle>
           </DialogHeader>
-          {renderSourceDetails()}
+          <BookingDetails
+            selectedSource={selectedSource}
+            bookingComData={bookingComData}
+            directBookingsTotal={directBookingsTotal}
+          />
         </DialogContent>
       </Dialog>
     </div>
