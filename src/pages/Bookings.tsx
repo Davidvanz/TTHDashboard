@@ -47,29 +47,39 @@ export default function Bookings() {
     }
   });
 
-  // Query for Revenue data
-  const { data: revenueData } = useQuery({
-    queryKey: ['revenueData'],
+  // Query for yearly statistics to get accurate total bookings and cancellations
+  const { data: yearlyStats } = useQuery({
+    queryKey: ['yearlyStats'],
     queryFn: async () => {
-      console.log('Fetching revenue data');
+      console.log('Fetching yearly statistics');
       const { data, error } = await supabase
-        .from('RevenueData_2023-2025')
-        .select('*');
+        .from('yearly_statistics')
+        .select('*')
+        .order('year', { ascending: false })
+        .limit(1);
       
       if (error) {
-        console.error('Error fetching revenue data:', error);
+        console.error('Error fetching yearly statistics:', error);
         throw error;
       }
-      console.log('Revenue data:', data);
-      return data;
+      console.log('Yearly statistics:', data);
+      return data[0];
     }
   });
 
-  // Calculate totals
+  // Calculate totals and percentages
+  const totalBookings = yearlyStats?.total_bookings || 0;
   const bookingComTotal = bookingComData?.reduce((acc, curr) => 
     acc + (parseInt(curr.Reservations) || 0), 0) || 0;
-  const directBookingsTotal = revenueData?.length || 0;
-  const totalBookings = bookingComTotal + directBookingsTotal;
+  const directBookingsTotal = totalBookings - bookingComTotal;
+
+  // Calculate percentages
+  const bookingComPercentage = totalBookings > 0 
+    ? (bookingComTotal / totalBookings) * 100 
+    : 0;
+  const directBookingsPercentage = totalBookings > 0 
+    ? (directBookingsTotal / totalBookings) * 100 
+    : 0;
 
   // Handle card click
   const handleSourceClick = (source) => {
@@ -121,14 +131,12 @@ export default function Bookings() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {revenueData?.map((booking, index) => (
-            <TableRow key={`${booking.Guest}-${index}`}>
-              <TableCell>{booking.Room_Type}</TableCell>
-              <TableCell>{booking.Guest}</TableCell>
-              <TableCell>{booking.Revenue}</TableCell>
-              <TableCell>{booking.Season}</TableCell>
-            </TableRow>
-          ))}
+          {/* Show direct bookings from yearly stats */}
+          <TableRow>
+            <TableCell colSpan={4} className="text-center">
+              Total Direct Bookings: {directBookingsTotal}
+            </TableCell>
+          </TableRow>
         </TableBody>
       </Table>
     );
@@ -150,7 +158,10 @@ export default function Bookings() {
           <CardContent>
             <div className="text-4xl font-bold">{bookingComTotal}</div>
             <p className="text-muted-foreground">
-              {((bookingComTotal / totalBookings) * 100).toFixed(1)}% of total bookings
+              {bookingComPercentage.toFixed(1)}% of total bookings
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Total bookings: {totalBookings}
             </p>
           </CardContent>
         </Card>
@@ -165,7 +176,10 @@ export default function Bookings() {
           <CardContent>
             <div className="text-4xl font-bold">{directBookingsTotal}</div>
             <p className="text-muted-foreground">
-              {((directBookingsTotal / totalBookings) * 100).toFixed(1)}% of total bookings
+              {directBookingsPercentage.toFixed(1)}% of total bookings
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Total bookings: {totalBookings}
             </p>
           </CardContent>
         </Card>
