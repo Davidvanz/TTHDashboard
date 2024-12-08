@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
@@ -18,8 +17,12 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="glass-card w-full max-w-md p-8 rounded-lg space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold">The Thatch House</h1>
+        <div className="text-center space-y-4">
+          <img 
+            src="/lovable-uploads/de099741-2aad-45da-b328-821900be6ce1.png" 
+            alt="The Thatch House Logo" 
+            className="w-32 h-32 object-contain mx-auto"
+          />
           <p className="text-muted-foreground">Dashboard Login</p>
         </div>
         
