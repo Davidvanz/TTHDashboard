@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Brain } from "lucide-react";
+import { Brain, TrendingUp, Calendar, Users, Ban } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,84 +19,92 @@ const Recommendations = () => {
         console.error('Error fetching yearly stats:', error);
         throw error;
       }
-      console.log('Yearly stats data for AI:', data);
+      console.log('Yearly stats data:', data);
       return data || [];
     }
   });
 
-  // Fetch booking.com data
-  const { data: bookingData, isLoading: bookingLoading } = useQuery({
-    queryKey: ['bookingComData'],
+  // Fetch monthly statistics
+  const { data: monthlyStats, isLoading: monthlyLoading } = useQuery({
+    queryKey: ['monthlyStats'],
     queryFn: async () => {
-      console.log('Fetching Booking.com data for AI analysis');
+      console.log('Fetching monthly statistics for AI analysis');
       const { data, error } = await supabase
-        .from('Booking.com Data')
+        .from('monthly_statistics')
         .select('*')
-        .order('Year', { ascending: false });
+        .order('year', { ascending: false })
+        .order('Arrival_Month_Num', { ascending: true });
       
       if (error) {
-        console.error('Error fetching Booking.com data:', error);
+        console.error('Error fetching monthly stats:', error);
         throw error;
       }
-      console.log('Booking.com data for AI:', data);
+      console.log('Monthly stats data:', data);
       return data || [];
     }
   });
 
   const generateInsights = () => {
-    if (!yearlyStats?.length || !bookingData?.length) return [];
+    if (!yearlyStats?.length || !monthlyStats?.length) return [];
 
     const insights = [];
     const currentYear = yearlyStats[0];
     const previousYear = yearlyStats[1];
-    const bookingMetrics = bookingData[0];
-
+    const currentYearMonths = monthlyStats.filter(m => m.year === currentYear.year);
+    
     // Revenue Growth Analysis
     if (currentYear && previousYear) {
       const revenueGrowth = ((currentYear.total_revenue - previousYear.total_revenue) / previousYear.total_revenue) * 100;
       insights.push({
         title: "Revenue Performance",
-        description: `Your revenue has ${revenueGrowth > 0 ? 'increased' : 'decreased'} by ${Math.abs(revenueGrowth).toFixed(1)}% compared to the previous year. ${
-          revenueGrowth > 0 ? 'Great job! This shows strong business growth.' : 'Consider reviewing your pricing strategy and marketing efforts.'
-        }`
+        description: `Your revenue ${revenueGrowth > 0 ? 'increased' : 'decreased'} by ${Math.abs(revenueGrowth).toFixed(1)}% compared to the previous year. ${
+          revenueGrowth > 0 
+            ? 'This shows strong business growth.' 
+            : 'Consider reviewing your pricing strategy.'
+        }`,
+        icon: <TrendingUp className="w-6 h-6 text-primary" />
       });
     }
 
-    // Booking Window Analysis
-    if (bookingMetrics?.Avg_Book_Window) {
+    // Booking Patterns Analysis
+    if (currentYearMonths.length > 0) {
+      const avgBookingsPerMonth = currentYear.total_bookings / currentYearMonths.length;
       insights.push({
         title: "Booking Patterns",
-        description: `Guests typically book ${Math.round(bookingMetrics.Avg_Book_Window)} days in advance. ${
-          bookingMetrics.Avg_Book_Window > 30 
-            ? 'This long booking window suggests good planning potential for revenue management.'
-            : 'Consider offering early booking incentives to extend this window.'
-        }`
+        description: `You average ${Math.round(avgBookingsPerMonth)} bookings per month. ${
+          avgBookingsPerMonth > 50 
+            ? 'Your booking volume is healthy.' 
+            : 'Consider implementing marketing strategies to increase bookings.'
+        }`,
+        icon: <Calendar className="w-6 h-6 text-primary" />
       });
     }
 
-    // Occupancy and Rate Analysis
+    // Occupancy Analysis
     if (currentYear) {
       const occupancyRate = (currentYear.total_room_nights / (365 * 7)) * 100; // Assuming 7 rooms
       insights.push({
         title: "Occupancy Optimization",
-        description: `Your current occupancy rate is ${occupancyRate.toFixed(1)}%. ${
+        description: `Your occupancy rate is ${occupancyRate.toFixed(1)}%. ${
           occupancyRate > 70 
-            ? 'This is excellent! Consider testing higher rates during peak periods.'
+            ? 'This is excellent! Consider testing higher rates during peak periods.' 
             : 'There might be opportunity to increase occupancy through targeted promotions.'
-        }`
+        }`,
+        icon: <Users className="w-6 h-6 text-primary" />
       });
     }
 
     // Cancellation Analysis
-    if (bookingMetrics?.Cancellation_Rate) {
-      const cancellationRate = parseFloat(bookingMetrics.Cancellation_Rate.replace('%', ''));
+    if (currentYear && currentYear.total_bookings > 0) {
+      const cancellationRate = (currentYear.cancellations / currentYear.total_bookings) * 100;
       insights.push({
         title: "Cancellation Management",
-        description: `Your cancellation rate is ${bookingMetrics.Cancellation_Rate}. ${
+        description: `Your cancellation rate is ${cancellationRate.toFixed(1)}%. ${
           cancellationRate < 15 
-            ? 'This is a healthy rate, indicating effective booking policies.'
+            ? 'This is a healthy rate, indicating effective booking policies.' 
             : 'Consider reviewing your cancellation policy and deposit requirements.'
-        }`
+        }`,
+        icon: <Ban className="w-6 h-6 text-primary" />
       });
     }
 
@@ -105,15 +113,15 @@ const Recommendations = () => {
 
   const insights = generateInsights();
 
-  if (yearlyLoading || bookingLoading) {
+  if (yearlyLoading || monthlyLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 p-6">
         <div className="flex items-center gap-2">
           <Brain className="w-6 h-6 text-primary" />
           <h1 className="text-2xl font-bold">AI Recommendations</h1>
         </div>
         {[1, 2, 3, 4].map((i) => (
-          <Card key={i}>
+          <Card key={i} className="w-full">
             <CardHeader>
               <Skeleton className="h-4 w-[250px]" />
             </CardHeader>
@@ -128,35 +136,38 @@ const Recommendations = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div className="flex items-center gap-2">
         <Brain className="w-6 h-6 text-primary" />
         <h1 className="text-2xl font-bold">AI Recommendations</h1>
       </div>
       
-      {insights.length > 0 ? (
-        insights.map((insight, index) => (
-          <Card key={index}>
+      <div className="grid gap-6 md:grid-cols-2">
+        {insights.length > 0 ? (
+          insights.map((insight, index) => (
+            <Card key={index} className="w-full">
+              <CardHeader className="flex flex-row items-center gap-4">
+                {insight.icon}
+                <CardTitle>{insight.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-base">{insight.description}</CardDescription>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <Card className="col-span-2">
             <CardHeader>
-              <CardTitle>{insight.title}</CardTitle>
+              <CardTitle>No Data Available</CardTitle>
             </CardHeader>
             <CardContent>
-              <CardDescription className="text-base">{insight.description}</CardDescription>
+              <CardDescription>
+                Unable to generate recommendations. Please ensure there is sufficient historical data available.
+              </CardDescription>
             </CardContent>
           </Card>
-        ))
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>No Data Available</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CardDescription>
-              Unable to generate recommendations. Please ensure there is sufficient historical data available.
-            </CardDescription>
-          </CardContent>
-        </Card>
-      )}
+        )}
+      </div>
     </div>
   );
 };
