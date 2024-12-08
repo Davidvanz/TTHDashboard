@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table";
 
 interface RoomStats {
-  room_type: string;
+  room_description: string;
   total_revenue: number;
   avg_rate: number;
   occupancy_rate: number;
@@ -34,7 +34,7 @@ const RoomStatistics = () => {
       console.log("Fetching room statistics for year:", selectedYear);
       const { data, error } = await supabase
         .from("RevenueData_2023-2025")
-        .select("Room_Type, Revenue, Room_Nights, Arrival")
+        .select("Room_Description, Revenue, Room_Nights, Arrival")
         .like("Arrival", `${selectedYear}%`);
 
       if (error) {
@@ -42,13 +42,13 @@ const RoomStatistics = () => {
         throw error;
       }
 
-      // Group and calculate statistics by room type
+      // Group and calculate statistics by room description
       const roomStatsMap = data.reduce((acc: { [key: string]: RoomStats }, curr) => {
-        const roomType = curr.Room_Type || "Unknown";
+        const roomDescription = curr.Room_Description || "Unknown";
         
-        if (!acc[roomType]) {
-          acc[roomType] = {
-            room_type: roomType,
+        if (!acc[roomDescription]) {
+          acc[roomDescription] = {
+            room_description: roomDescription,
             total_revenue: 0,
             avg_rate: 0,
             occupancy_rate: 0,
@@ -56,8 +56,8 @@ const RoomStatistics = () => {
           };
         }
 
-        acc[roomType].total_revenue += curr.Revenue || 0;
-        acc[roomType].total_nights += curr.Room_Nights || 0;
+        acc[roomDescription].total_revenue += curr.Revenue || 0;
+        acc[roomDescription].total_nights += curr.Room_Nights || 0;
 
         return acc;
       }, {});
@@ -117,7 +117,7 @@ const RoomStatistics = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Room Type</TableHead>
+                    <TableHead>Room Description</TableHead>
                     <TableHead>Total Revenue</TableHead>
                     <TableHead>Average Rate</TableHead>
                     <TableHead>Occupancy Rate</TableHead>
@@ -126,8 +126,8 @@ const RoomStatistics = () => {
                 </TableHeader>
                 <TableBody>
                   {roomStats?.map((room) => (
-                    <TableRow key={room.room_type}>
-                      <TableCell className="font-medium">{room.room_type}</TableCell>
+                    <TableRow key={room.room_description}>
+                      <TableCell className="font-medium">{room.room_description}</TableCell>
                       <TableCell>{formatCurrency(room.total_revenue)}</TableCell>
                       <TableCell>{formatCurrency(room.avg_rate)}</TableCell>
                       <TableCell>{room.occupancy_rate.toFixed(1)}%</TableCell>
