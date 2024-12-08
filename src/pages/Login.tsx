@@ -1,25 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { Auth } from "@supabase/auth-ui-react";
+import { ThemeSupa } from "@supabase/auth-ui-shared";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Login attempt with:", { username });
-    // This is where you'll integrate your actual login logic
-    if (username && password) {
-      toast.success("Login successful!");
+  // Listen for authentication state changes
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === "SIGNED_IN" && session) {
+      console.log("User signed in:", session.user.email);
       navigate("/dashboard");
-    } else {
-      toast.error("Please fill in all fields");
     }
-  };
+  });
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -29,37 +23,21 @@ const Login = () => {
           <p className="text-muted-foreground">Dashboard Login</p>
         </div>
         
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="username" className="text-sm font-medium">
-              Username
-            </label>
-            <Input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium">
-              Password
-            </label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-            />
-          </div>
-
-          <Button type="submit" className="w-full">
-            Login
-          </Button>
-        </form>
+        <Auth
+          supabaseClient={supabase}
+          appearance={{
+            theme: ThemeSupa,
+            variables: {
+              default: {
+                colors: {
+                  brand: 'hsl(var(--primary))',
+                  brandAccent: 'hsl(var(--primary))',
+                }
+              }
+            }
+          }}
+          providers={[]}
+        />
       </div>
     </div>
   );

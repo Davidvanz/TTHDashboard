@@ -9,6 +9,54 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      "Booking.com Data": {
+        Row: {
+          Avg_Book_Window: number | null
+          Avg_Daily_Rate: string | null
+          Avg_Length_of_Stay: number | null
+          Avg_Rate_Growth_YTD: string | null
+          Cancellation_Rate: string | null
+          Country: string | null
+          CR_Diff_YTD: string | null
+          CR_Growth_YTD: string | null
+          Currency: string | null
+          Res_Difference_YTD: string | null
+          Res_Growth_YTD: string | null
+          Reservations: string | null
+          Year: number | null
+        }
+        Insert: {
+          Avg_Book_Window?: number | null
+          Avg_Daily_Rate?: string | null
+          Avg_Length_of_Stay?: number | null
+          Avg_Rate_Growth_YTD?: string | null
+          Cancellation_Rate?: string | null
+          Country?: string | null
+          CR_Diff_YTD?: string | null
+          CR_Growth_YTD?: string | null
+          Currency?: string | null
+          Res_Difference_YTD?: string | null
+          Res_Growth_YTD?: string | null
+          Reservations?: string | null
+          Year?: number | null
+        }
+        Update: {
+          Avg_Book_Window?: number | null
+          Avg_Daily_Rate?: string | null
+          Avg_Length_of_Stay?: number | null
+          Avg_Rate_Growth_YTD?: string | null
+          Cancellation_Rate?: string | null
+          Country?: string | null
+          CR_Diff_YTD?: string | null
+          CR_Growth_YTD?: string | null
+          Currency?: string | null
+          Res_Difference_YTD?: string | null
+          Res_Growth_YTD?: string | null
+          Reservations?: string | null
+          Year?: number | null
+        }
+        Relationships: []
+      }
       "RevenueData_2023-2025": {
         Row: {
           Arrival: string | null

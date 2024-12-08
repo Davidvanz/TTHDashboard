@@ -1,62 +1,47 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DollarSign, Percent, BedDouble, XCircle } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { Button } from "@/components/ui/button";
+import { Toggle } from "@/components/ui/toggle";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
-  const [timeframe, setTimeframe] = useState<"month" | "year">("month");
+  const [selectedYear, setSelectedYear] = useState<2023 | 2024>(2024);
+  const navigate = useNavigate();
 
-  // Query for monthly statistics
-  const { data: monthlyStats } = useQuery({
-    queryKey: ['monthlyStats'],
-    queryFn: async () => {
-      console.log('Fetching monthly statistics...');
-      const { data, error } = await supabase
-        .from('monthly_statistics')
-        .select('*')
-        .order('year', { ascending: false })
-        .order('Arrival_Month_Num', { ascending: false })
-        .limit(1);
-      
-      if (error) {
-        console.error('Error fetching monthly stats:', error);
-        throw error;
+  // Check authentication
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.log("No active session found, redirecting to login");
+        navigate("/login");
       }
-      console.log('Monthly stats data:', data);
-      return data?.[0];
-    }
-  });
+    };
+    checkAuth();
+  }, [navigate]);
 
   // Query for yearly statistics
   const { data: yearlyStats } = useQuery({
-    queryKey: ['yearlyStats'],
+    queryKey: ['yearlyStats', selectedYear],
     queryFn: async () => {
-      console.log('Fetching yearly statistics...');
+      console.log('Fetching yearly statistics for year:', selectedYear);
       const { data, error } = await supabase
         .from('yearly_statistics')
         .select('*')
-        .order('year', { ascending: false })
-        .limit(1);
+        .eq('year', selectedYear)
+        .single();
       
       if (error) {
         console.error('Error fetching yearly stats:', error);
         throw error;
       }
       console.log('Yearly stats data:', data);
-      return data?.[0];
+      return data;
     }
   });
-
-  const currentStats = timeframe === "month" ? monthlyStats : yearlyStats;
-  const previousStats = timeframe === "month" ? monthlyStats : yearlyStats; // We'll implement previous period comparison later
-
-  // Calculate trends (comparing with previous period)
-  const calculateTrend = (current: number, previous: number) => {
-    if (!previous) return 0;
-    return ((current - previous) / previous) * 100;
-  };
 
   // Format currency
   const formatCurrency = (value: number) => {
@@ -67,22 +52,28 @@ const Dashboard = () => {
     }).format(value);
   };
 
+  // Calculate year-over-year change
+  const calculateYoYChange = (current: number, previous: number) => {
+    if (!previous) return 0;
+    return ((current - previous) / previous) * 100;
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Dashboard Overview</h1>
         <div className="flex gap-2">
           <Button
-            variant={timeframe === "month" ? "default" : "outline"}
-            onClick={() => setTimeframe("month")}
+            variant={selectedYear === 2023 ? "default" : "outline"}
+            onClick={() => setSelectedYear(2023)}
           >
-            Month
+            2023
           </Button>
           <Button
-            variant={timeframe === "year" ? "default" : "outline"}
-            onClick={() => setTimeframe("year")}
+            variant={selectedYear === 2024 ? "default" : "outline"}
+            onClick={() => setSelectedYear(2024)}
           >
-            Year
+            2024
           </Button>
         </div>
       </div>
@@ -90,43 +81,43 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Revenue"
-          value={currentStats ? formatCurrency(currentStats.total_revenue) : '$0'}
-          trend={calculateTrend(
-            currentStats?.total_revenue || 0,
-            previousStats?.total_revenue || 0
+          value={yearlyStats ? formatCurrency(yearlyStats.total_revenue) : '$0'}
+          trend={calculateYoYChange(
+            yearlyStats?.total_revenue || 0,
+            yearlyStats?.total_revenue || 0 // This will be updated with previous year data
           )}
           icon={<DollarSign className="w-4 h-4 text-primary" />}
         />
         <StatCard
           title="Average Rate"
-          value={currentStats ? formatCurrency(currentStats.avg_rate) : '$0'}
-          trend={calculateTrend(
-            currentStats?.avg_rate || 0,
-            previousStats?.avg_rate || 0
+          value={yearlyStats ? formatCurrency(yearlyStats.avg_rate) : '$0'}
+          trend={calculateYoYChange(
+            yearlyStats?.avg_rate || 0,
+            yearlyStats?.avg_rate || 0 // This will be updated with previous year data
           )}
           icon={<Percent className="w-4 h-4 text-primary" />}
         />
         <StatCard
           title="Occupancy Rate"
-          value={currentStats ? 
-            `${Math.round((currentStats.total_room_nights / (timeframe === "month" ? 30 : 365)) * 100)}%` 
+          value={yearlyStats ? 
+            `${Math.round((yearlyStats.total_room_nights / 365) * 100)}%` 
             : '0%'
           }
-          trend={calculateTrend(
-            currentStats?.total_room_nights || 0,
-            previousStats?.total_room_nights || 0
+          trend={calculateYoYChange(
+            yearlyStats?.total_room_nights || 0,
+            yearlyStats?.total_room_nights || 0
           )}
           icon={<BedDouble className="w-4 h-4 text-primary" />}
         />
         <StatCard
           title="Cancellation Rate"
-          value={currentStats ? 
-            `${Math.round((currentStats.cancellations / currentStats.total_bookings) * 100)}%`
+          value={yearlyStats ? 
+            `${Math.round((yearlyStats.cancellations / yearlyStats.total_bookings) * 100)}%`
             : '0%'
           }
-          trend={-calculateTrend(
-            currentStats?.cancellations || 0,
-            previousStats?.cancellations || 0
+          trend={-calculateYoYChange(
+            yearlyStats?.cancellations || 0,
+            yearlyStats?.cancellations || 0
           )}
           icon={<XCircle className="w-4 h-4 text-primary" />}
         />
