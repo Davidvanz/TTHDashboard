@@ -6,6 +6,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
+const TOTAL_ROOMS = 7; // Updated to reflect correct number of rooms
+
 const Dashboard = () => {
   const [selectedYear, setSelectedYear] = useState<2023 | 2024>(2024);
   const navigate = useNavigate();
@@ -60,7 +62,7 @@ const Dashboard = () => {
   // Calculate occupancy rate based on room nights
   const calculateOccupancyRate = (roomNights: number) => {
     // Total possible room nights in a year (365 days * number of rooms)
-    const totalPossibleNights = 365 * 5; // Assuming 5 rooms, adjust as needed
+    const totalPossibleNights = 365 * TOTAL_ROOMS;
     return (roomNights / totalPossibleNights) * 100;
   };
 
