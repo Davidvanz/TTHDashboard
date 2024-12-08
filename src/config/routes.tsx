@@ -1,7 +1,8 @@
-import Dashboard from "@/pages/Dashboard";
-import Bookings from "@/pages/Bookings";
-import Recommendations from "@/pages/Recommendations";
-import Login from "@/pages/Login";
+import { Dashboard } from "@/pages/Dashboard";
+import { Login } from "@/pages/Login";
+import { Bookings } from "@/pages/Bookings";
+import { Recommendations } from "@/pages/Recommendations";
+import RoomStatistics from "@/pages/RoomStatistics";
 
 export const routes = [
   {
@@ -22,7 +23,7 @@ export const routes = [
   },
   {
     path: "/rooms",
-    element: <div className="p-8">Room Statistics (Coming Soon)</div>,
+    element: <RoomStatistics />,
   },
   {
     path: "/recommendations",
