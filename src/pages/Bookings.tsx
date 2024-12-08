@@ -6,6 +6,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { YearSelector } from "@/components/bookings/YearSelector";
 import { BookingSourceCard } from "@/components/bookings/BookingSourceCard";
 import { BookingDetails } from "@/components/bookings/BookingDetails";
+import type { Database } from "@/integrations/supabase/types";
+
+type BookingComData = Database['public']['Tables']['Booking.com Data']['Row'];
 
 export default function Bookings() {
   const navigate = useNavigate();
@@ -53,9 +56,8 @@ export default function Bookings() {
     queryKey: ['bookingComData', selectedYear],
     queryFn: async () => {
       console.log('Fetching Booking.com data for year:', selectedYear);
-      // Note: The table name is "Booking.com Data" with a space
       const { data, error } = await supabase
-        .from('"Booking.com Data"')
+        .from('Booking.com Data')
         .select('*')
         .eq('Year', selectedYear);
       
@@ -64,7 +66,7 @@ export default function Bookings() {
         throw error;
       }
       console.log('Raw Booking.com data:', data);
-      return data;
+      return data as BookingComData[];
     }
   });
 
