@@ -32,6 +32,11 @@ const Login = () => {
                 colors: {
                   brand: 'hsl(var(--primary))',
                   brandAccent: 'hsl(var(--primary))',
+                  inputText: 'white',
+                  inputBackground: 'hsl(var(--secondary))',
+                  inputBorder: 'hsl(var(--border))',
+                  inputLabelText: 'white',
+                  inputPlaceholder: 'hsl(var(--muted-foreground))',
                 }
               }
             }
