@@ -13,6 +13,7 @@ const Recommendations = () => {
       const { data, error } = await supabase
         .from('yearly_statistics')
         .select('*')
+        .in('year', [2023, 2024])
         .order('year', { ascending: false });
       
       if (error) {
@@ -32,6 +33,7 @@ const Recommendations = () => {
       const { data, error } = await supabase
         .from('monthly_statistics')
         .select('*')
+        .in('year', [2023, 2024])
         .order('year', { ascending: false })
         .order('Arrival_Month_Num', { ascending: true });
       
@@ -48,8 +50,8 @@ const Recommendations = () => {
     if (!yearlyStats?.length || !monthlyStats?.length) return [];
 
     const insights = [];
-    const currentYear = yearlyStats[0];
-    const previousYear = yearlyStats[1];
+    const currentYear = yearlyStats[0]; // 2024
+    const previousYear = yearlyStats[1]; // 2023
     const currentYearMonths = monthlyStats.filter(m => m.year === currentYear.year);
     
     // Revenue Growth Analysis
@@ -57,52 +59,62 @@ const Recommendations = () => {
       const revenueGrowth = ((currentYear.total_revenue - previousYear.total_revenue) / previousYear.total_revenue) * 100;
       insights.push({
         title: "Revenue Performance",
-        description: `Your revenue ${revenueGrowth > 0 ? 'increased' : 'decreased'} by ${Math.abs(revenueGrowth).toFixed(1)}% compared to the previous year. ${
+        description: `Revenue has ${revenueGrowth > 0 ? 'increased' : 'decreased'} by ${Math.abs(revenueGrowth).toFixed(1)}% from 2023 to 2024. ${
           revenueGrowth > 0 
-            ? 'This shows strong business growth.' 
-            : 'Consider reviewing your pricing strategy.'
+            ? 'This shows strong business growth. Consider reinvesting in property improvements.' 
+            : 'Consider reviewing your pricing strategy and marketing efforts.'
         }`,
         icon: <TrendingUp className="w-6 h-6 text-primary" />
       });
     }
 
-    // Booking Patterns Analysis
-    if (currentYearMonths.length > 0) {
-      const avgBookingsPerMonth = currentYear.total_bookings / currentYearMonths.length;
+    // Booking Volume Analysis
+    if (currentYear && previousYear) {
+      const bookingGrowth = ((currentYear.total_bookings - previousYear.total_bookings) / previousYear.total_bookings) * 100;
       insights.push({
         title: "Booking Patterns",
-        description: `You average ${Math.round(avgBookingsPerMonth)} bookings per month. ${
-          avgBookingsPerMonth > 50 
-            ? 'Your booking volume is healthy.' 
-            : 'Consider implementing marketing strategies to increase bookings.'
+        description: `Booking volume has ${bookingGrowth > 0 ? 'grown' : 'decreased'} by ${Math.abs(bookingGrowth).toFixed(1)}% compared to 2023. ${
+          bookingGrowth > 0 
+            ? 'Your marketing efforts are showing positive results.' 
+            : 'Consider implementing new marketing strategies to increase bookings.'
         }`,
         icon: <Calendar className="w-6 h-6 text-primary" />
       });
     }
 
     // Occupancy Analysis
-    if (currentYear) {
-      const occupancyRate = (currentYear.total_room_nights / (365 * 7)) * 100; // Assuming 7 rooms
+    if (currentYear && previousYear) {
+      const currentOccupancy = (currentYear.total_room_nights / (365 * 7)) * 100; // Assuming 7 rooms
+      const previousOccupancy = (previousYear.total_room_nights / (365 * 7)) * 100;
+      const occupancyChange = currentOccupancy - previousOccupancy;
+      
       insights.push({
         title: "Occupancy Optimization",
-        description: `Your occupancy rate is ${occupancyRate.toFixed(1)}%. ${
-          occupancyRate > 70 
-            ? 'This is excellent! Consider testing higher rates during peak periods.' 
-            : 'There might be opportunity to increase occupancy through targeted promotions.'
+        description: `Your current occupancy rate is ${currentOccupancy.toFixed(1)}%, ${
+          occupancyChange > 0 ? 'up' : 'down'
+        } ${Math.abs(occupancyChange).toFixed(1)}% from last year. ${
+          currentOccupancy > 70 
+            ? 'Consider testing higher rates during peak periods.' 
+            : 'Focus on increasing mid-week occupancy through targeted promotions.'
         }`,
         icon: <Users className="w-6 h-6 text-primary" />
       });
     }
 
     // Cancellation Analysis
-    if (currentYear && currentYear.total_bookings > 0) {
-      const cancellationRate = (currentYear.cancellations / currentYear.total_bookings) * 100;
+    if (currentYear && previousYear) {
+      const currentCancellationRate = (currentYear.cancellations / currentYear.total_bookings) * 100;
+      const previousCancellationRate = (previousYear.cancellations / previousYear.total_bookings) * 100;
+      const cancellationChange = currentCancellationRate - previousCancellationRate;
+      
       insights.push({
         title: "Cancellation Management",
-        description: `Your cancellation rate is ${cancellationRate.toFixed(1)}%. ${
-          cancellationRate < 15 
-            ? 'This is a healthy rate, indicating effective booking policies.' 
-            : 'Consider reviewing your cancellation policy and deposit requirements.'
+        description: `Your cancellation rate is ${currentCancellationRate.toFixed(1)}%, ${
+          cancellationChange > 0 ? 'up' : 'down'
+        } ${Math.abs(cancellationChange).toFixed(1)}% from last year. ${
+          currentCancellationRate < 15 
+            ? 'Your booking policies are working effectively.' 
+            : 'Consider adjusting your cancellation policy and deposit requirements.'
         }`,
         icon: <Ban className="w-6 h-6 text-primary" />
       });
