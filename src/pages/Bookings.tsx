@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { ChartContainer } from "@/components/ui/chart";
 
 const Bookings = () => {
   const navigate = useNavigate();
@@ -81,8 +81,8 @@ const Bookings = () => {
     { name: 'Direct Bookings', value: otherBookingsTotal, color: '#00875A' },
   ];
 
-  const handleSourceClick = (source) => {
-    setSelectedSource(source);
+  const handleSourceClick = (entry) => {
+    setSelectedSource(entry);
     setShowDetails(true);
   };
 
@@ -92,8 +92,8 @@ const Bookings = () => {
     if (selectedSource.name === 'Booking.com') {
       return (
         <div className="space-y-4">
-          {bookingComData?.map((booking) => (
-            <Card key={`${booking.Country}-${booking.Year}`} className="w-full">
+          {bookingComData?.map((booking, index) => (
+            <Card key={`${booking.Country}-${index}`} className="w-full">
               <CardHeader>
                 <CardTitle>{booking.Country}</CardTitle>
               </CardHeader>
@@ -150,8 +150,8 @@ const Bookings = () => {
         <CardHeader>
           <CardTitle>Booking Sources Distribution</CardTitle>
         </CardHeader>
-        <CardContent className="h-[400px]">
-          <ResponsiveContainer width="100%" height="100%">
+        <CardContent>
+          <ChartContainer className="h-[400px]" config={{}}>
             <PieChart>
               <Pie
                 data={pieData}
@@ -161,7 +161,7 @@ const Bookings = () => {
                 cy="50%"
                 outerRadius={150}
                 label
-                onClick={(data) => handleSourceClick(data)}
+                onClick={handleSourceClick}
                 className="cursor-pointer"
               >
                 {pieData.map((entry, index) => (
@@ -171,7 +171,7 @@ const Bookings = () => {
               <Tooltip />
               <Legend />
             </PieChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         </CardContent>
       </Card>
 
