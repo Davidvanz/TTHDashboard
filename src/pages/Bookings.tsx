@@ -73,13 +73,8 @@ export default function Bookings() {
   // Calculate totals and percentages
   const totalBookings = yearlyStats?.total_bookings || 0;
   
-  // Count all rows in Booking.com Data as Booking.com bookings
-  const bookingComTotal = bookingComData?.reduce((total, booking) => {
-    const reservations = parseInt(booking.Reservations?.replace(/,/g, '') || '0', 10);
-    console.log(`Processing booking from ${booking.Country}: ${booking.Reservations} -> ${reservations}`);
-    return total + (isNaN(reservations) ? 0 : reservations);
-  }, 0) || 0;
-  
+  // Count Booking.com bookings as the number of rows in the table
+  const bookingComTotal = bookingComData?.length || 0;
   console.log('Total Booking.com bookings:', bookingComTotal);
   
   // Direct bookings are the remaining bookings
