@@ -20,7 +20,8 @@ const Bookings = () => {
     checkAuth();
   }, [navigate]);
 
-  const { data: bookingData, isLoading } = useQuery({
+  // Query for Booking.com data
+  const { data: bookingComData, isLoading: isLoadingBookingCom } = useQuery({
     queryKey: ['bookingComData'],
     queryFn: async () => {
       console.log('Fetching Booking.com data');
@@ -37,7 +38,25 @@ const Bookings = () => {
     }
   });
 
-  if (isLoading) {
+  // Query for Revenue data to get other booking sources
+  const { data: revenueData, isLoading: isLoadingRevenue } = useQuery({
+    queryKey: ['revenueData'],
+    queryFn: async () => {
+      console.log('Fetching revenue data');
+      const { data, error } = await supabase
+        .from('RevenueData_2023-2025')
+        .select('*');
+      
+      if (error) {
+        console.error('Error fetching revenue data:', error);
+        throw error;
+      }
+      console.log('Revenue data:', data);
+      return data;
+    }
+  });
+
+  if (isLoadingBookingCom || isLoadingRevenue) {
     return <div className="p-8">Loading...</div>;
   }
 
@@ -45,8 +64,9 @@ const Bookings = () => {
     <div className="space-y-8">
       <h1 className="text-3xl font-bold">Source of Bookings</h1>
       
+      {/* Booking.com Data */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {bookingData?.map((booking) => (
+        {bookingComData?.map((booking) => (
           <Card key={`${booking.Country}-${booking.Year}`}>
             <CardHeader>
               <CardTitle>{booking.Country}</CardTitle>
@@ -77,30 +97,31 @@ const Bookings = () => {
         ))}
       </div>
 
+      {/* Revenue Data Table */}
       <div className="mt-8">
         <Card>
           <CardHeader>
-            <CardTitle>Detailed Statistics</CardTitle>
+            <CardTitle>Other Booking Sources</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Country</TableHead>
-                  <TableHead>Year</TableHead>
-                  <TableHead>Growth YTD</TableHead>
-                  <TableHead>Rate Growth</TableHead>
-                  <TableHead>Avg Length of Stay</TableHead>
+                  <TableHead>Room Type</TableHead>
+                  <TableHead>Guest</TableHead>
+                  <TableHead>Revenue</TableHead>
+                  <TableHead>Season</TableHead>
+                  <TableHead>Room Nights</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {bookingData?.map((booking) => (
-                  <TableRow key={`${booking.Country}-${booking.Year}-table`}>
-                    <TableCell>{booking.Country}</TableCell>
-                    <TableCell>{booking.Year}</TableCell>
-                    <TableCell>{booking.Res_Growth_YTD}</TableCell>
-                    <TableCell>{booking.Avg_Rate_Growth_YTD}</TableCell>
-                    <TableCell>{booking.Avg_Length_of_Stay} nights</TableCell>
+                {revenueData?.map((booking, index) => (
+                  <TableRow key={`${booking.Guest}-${index}`}>
+                    <TableCell>{booking.Room_Type}</TableCell>
+                    <TableCell>{booking.Guest}</TableCell>
+                    <TableCell>{booking.Revenue}</TableCell>
+                    <TableCell>{booking.Season}</TableCell>
+                    <TableCell>{booking.Room_Nights}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
