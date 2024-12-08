@@ -29,24 +29,6 @@ export default function Bookings() {
     checkAuth();
   }, [navigate]);
 
-  // Query for Booking.com data
-  const { data: bookingComData } = useQuery({
-    queryKey: ['bookingComData'],
-    queryFn: async () => {
-      console.log('Fetching Booking.com data');
-      const { data, error } = await supabase
-        .from('Booking.com Data')
-        .select('*');
-      
-      if (error) {
-        console.error('Error fetching Booking.com data:', error);
-        throw error;
-      }
-      console.log('Booking.com data:', data);
-      return data;
-    }
-  });
-
   // Query for yearly statistics to get accurate total bookings and cancellations
   const { data: yearlyStats } = useQuery({
     queryKey: ['yearlyStats'],
@@ -67,10 +49,31 @@ export default function Bookings() {
     }
   });
 
+  // Query for Booking.com data for the current year
+  const currentYear = new Date().getFullYear();
+  const { data: bookingComData } = useQuery({
+    queryKey: ['bookingComData', currentYear],
+    queryFn: async () => {
+      console.log('Fetching Booking.com data for year:', currentYear);
+      const { data, error } = await supabase
+        .from('Booking.com Data')
+        .select('*')
+        .eq('Year', currentYear);
+      
+      if (error) {
+        console.error('Error fetching Booking.com data:', error);
+        throw error;
+      }
+      console.log('Booking.com data:', data);
+      return data;
+    }
+  });
+
   // Calculate totals and percentages
   const totalBookings = yearlyStats?.total_bookings || 0;
-  const bookingComTotal = bookingComData?.reduce((acc, curr) => 
-    acc + (parseInt(curr.Reservations) || 0), 0) || 0;
+  const bookingComTotal = bookingComData?.[0]?.Reservations 
+    ? parseInt(bookingComData[0].Reservations) 
+    : 0;
   const directBookingsTotal = totalBookings - bookingComTotal;
 
   // Calculate percentages
@@ -131,7 +134,6 @@ export default function Bookings() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {/* Show direct bookings from yearly stats */}
           <TableRow>
             <TableCell colSpan={4} className="text-center">
               Total Direct Bookings: {directBookingsTotal}
