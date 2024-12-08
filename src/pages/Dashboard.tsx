@@ -17,7 +17,7 @@ const Dashboard = () => {
         .from('monthly_statistics')
         .select('*')
         .order('year', { ascending: false })
-        .order('arrival_month_num', { ascending: false })
+        .order('Arrival_Month_Num', { ascending: false })  // Fixed case sensitivity
         .limit(1);
       
       if (error) {
