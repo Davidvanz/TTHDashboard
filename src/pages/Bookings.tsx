@@ -49,16 +49,20 @@ export default function Bookings() {
     }
   });
 
-  // Query for Booking.com data for the current year
-  const currentYear = new Date().getFullYear();
+  // Query for Booking.com data using the year from yearly statistics
   const { data: bookingComData } = useQuery({
-    queryKey: ['bookingComData', currentYear],
+    queryKey: ['bookingComData', yearlyStats?.year],
     queryFn: async () => {
-      console.log('Fetching Booking.com data for year:', currentYear);
+      if (!yearlyStats?.year) {
+        console.log('No year available from yearly statistics yet');
+        return null;
+      }
+      
+      console.log('Fetching Booking.com data for year:', yearlyStats.year);
       const { data, error } = await supabase
         .from('Booking.com Data')
         .select('*')
-        .eq('Year', currentYear);
+        .eq('Year', yearlyStats.year);
       
       if (error) {
         console.error('Error fetching Booking.com data:', error);
@@ -66,7 +70,8 @@ export default function Bookings() {
       }
       console.log('Booking.com data:', data);
       return data;
-    }
+    },
+    enabled: !!yearlyStats?.year // Only run query when we have the year
   });
 
   // Calculate totals and percentages
