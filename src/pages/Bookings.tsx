@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
@@ -148,7 +149,7 @@ export default function Bookings() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-8">
       <h1 className="text-3xl font-bold">Source of Bookings</h1>
       
       {/* Pie Chart Card */}
