@@ -12,7 +12,7 @@ export function StatCard({ title, value, trend, icon }: StatCardProps) {
   const isPositive = trend > 0;
   
   return (
-    <div className="stat-card">
+    <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
       <div className="flex justify-between items-start">
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground">{title}</p>
@@ -23,15 +23,15 @@ export function StatCard({ title, value, trend, icon }: StatCardProps) {
         </div>
       </div>
       
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 mt-4">
         {isPositive ? (
-          <ArrowUpIcon className="w-4 h-4 trend-up" />
+          <ArrowUpIcon className="w-4 h-4 text-green-500" />
         ) : (
-          <ArrowDownIcon className="w-4 h-4 trend-down" />
+          <ArrowDownIcon className="w-4 h-4 text-red-500" />
         )}
         <span className={cn(
           "text-sm font-medium",
-          isPositive ? "trend-up" : "trend-down"
+          isPositive ? "text-green-500" : "text-red-500"
         )}>
           {Math.abs(trend)}%
         </span>

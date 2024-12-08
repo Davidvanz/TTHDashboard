@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { DollarSign, Percent, BedDouble, XCircle } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { Button } from "@/components/ui/button";
-import { Toggle } from "@/components/ui/toggle";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -58,6 +57,13 @@ const Dashboard = () => {
     return ((current - previous) / previous) * 100;
   };
 
+  // Calculate occupancy rate based on room nights
+  const calculateOccupancyRate = (roomNights: number) => {
+    // Total possible room nights in a year (365 days * number of rooms)
+    const totalPossibleNights = 365 * 5; // Assuming 5 rooms, adjust as needed
+    return (roomNights / totalPossibleNights) * 100;
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
@@ -84,7 +90,7 @@ const Dashboard = () => {
           value={yearlyStats ? formatCurrency(yearlyStats.total_revenue) : '$0'}
           trend={calculateYoYChange(
             yearlyStats?.total_revenue || 0,
-            yearlyStats?.total_revenue || 0 // This will be updated with previous year data
+            yearlyStats?.total_revenue || 0
           )}
           icon={<DollarSign className="w-4 h-4 text-primary" />}
         />
@@ -93,14 +99,14 @@ const Dashboard = () => {
           value={yearlyStats ? formatCurrency(yearlyStats.avg_rate) : '$0'}
           trend={calculateYoYChange(
             yearlyStats?.avg_rate || 0,
-            yearlyStats?.avg_rate || 0 // This will be updated with previous year data
+            yearlyStats?.avg_rate || 0
           )}
           icon={<Percent className="w-4 h-4 text-primary" />}
         />
         <StatCard
           title="Occupancy Rate"
           value={yearlyStats ? 
-            `${Math.round((yearlyStats.total_room_nights / 365) * 100)}%` 
+            `${Math.round(calculateOccupancyRate(yearlyStats.total_room_nights))}%` 
             : '0%'
           }
           trend={calculateYoYChange(

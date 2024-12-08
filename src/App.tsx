@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DashboardLayout } from "./components/DashboardLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Bookings from "./pages/Bookings";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -34,10 +35,9 @@ const App = () => {
                 <Dashboard />
               </DashboardLayout>
             } />
-            {/* Placeholder routes for future implementation */}
             <Route path="/bookings" element={
               <DashboardLayout>
-                <div className="p-8">Source of Bookings (Coming Soon)</div>
+                <Bookings />
               </DashboardLayout>
             } />
             <Route path="/rooms" element={
