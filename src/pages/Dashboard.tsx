@@ -190,7 +190,7 @@ const Dashboard = () => {
       {/* Monthly Performance Chart */}
       <div className="mt-8">
         <h2 className="text-2xl font-semibold mb-4">Monthly Performance</h2>
-        <div className="h-[300px] w-full"> {/* Changed from h-[400px] to h-[300px] */}
+        <div className="h-[200px] w-full"> {/* Changed from h-[300px] to h-[200px] */}
           <ChartContainer
             config={{
               revenue: {
