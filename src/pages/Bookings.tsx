@@ -10,8 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
-import { ChartContainer } from "@/components/ui/chart";
+import { PieChart, Pie, Cell, Legend, Tooltip } from "recharts";
 
 const Bookings = () => {
   const navigate = useNavigate();
@@ -77,13 +76,16 @@ const Bookings = () => {
   const otherBookingsTotal = revenueData?.length || 0;
 
   const pieData = [
-    { name: 'Booking.com', value: bookingComTotal, color: '#0052CC' },
-    { name: 'Direct Bookings', value: otherBookingsTotal, color: '#00875A' },
+    { name: 'Booking.com', value: bookingComTotal, fill: '#0052CC' },
+    { name: 'Direct Bookings', value: otherBookingsTotal, fill: '#00875A' },
   ];
 
   const handleSourceClick = (entry) => {
-    setSelectedSource(entry);
-    setShowDetails(true);
+    console.log("Clicked entry:", entry);
+    if (entry && entry.payload) {
+      setSelectedSource(entry.payload);
+      setShowDetails(true);
+    }
   };
 
   const renderSourceDetails = () => {
@@ -151,8 +153,8 @@ const Bookings = () => {
           <CardTitle>Booking Sources Distribution</CardTitle>
         </CardHeader>
         <CardContent>
-          <ChartContainer className="h-[400px]" config={{}}>
-            <PieChart>
+          <div style={{ width: '100%', height: 400 }}>
+            <PieChart width={400} height={400} style={{ margin: '0 auto' }}>
               <Pie
                 data={pieData}
                 dataKey="value"
@@ -160,18 +162,18 @@ const Bookings = () => {
                 cx="50%"
                 cy="50%"
                 outerRadius={150}
-                label
+                label={(entry) => entry.name}
                 onClick={handleSourceClick}
                 className="cursor-pointer"
               >
                 {pieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}
               </Pie>
               <Tooltip />
-              <Legend />
+              <Legend verticalAlign="bottom" height={36} />
             </PieChart>
-          </ChartContainer>
+          </div>
         </CardContent>
       </Card>
 
