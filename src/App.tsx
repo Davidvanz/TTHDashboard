@@ -15,12 +15,30 @@ const queryClient = new QueryClient();
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.onAuthStateChange((event, session) => {
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
+      setIsLoading(false);
     });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event, !!session);
+      setIsAuthenticated(!!session);
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -29,28 +47,70 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/dashboard" element={
-              <DashboardLayout>
-                <Dashboard />
-              </DashboardLayout>
-            } />
-            <Route path="/bookings" element={
-              <DashboardLayout>
-                <Bookings />
-              </DashboardLayout>
-            } />
-            <Route path="/rooms" element={
-              <DashboardLayout>
-                <div className="p-8">Room Statistics (Coming Soon)</div>
-              </DashboardLayout>
-            } />
-            <Route path="/recommendations" element={
-              <DashboardLayout>
-                <Recommendations />
-              </DashboardLayout>
-            } />
+            <Route
+              path="/"
+              element={
+                isAuthenticated ? (
+                  <Navigate to="/dashboard" replace />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/login"
+              element={
+                isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                isAuthenticated ? (
+                  <DashboardLayout>
+                    <Dashboard />
+                  </DashboardLayout>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/bookings"
+              element={
+                isAuthenticated ? (
+                  <DashboardLayout>
+                    <Bookings />
+                  </DashboardLayout>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/rooms"
+              element={
+                isAuthenticated ? (
+                  <DashboardLayout>
+                    <div className="p-8">Room Statistics (Coming Soon)</div>
+                  </DashboardLayout>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/recommendations"
+              element={
+                isAuthenticated ? (
+                  <DashboardLayout>
+                    <Recommendations />
+                  </DashboardLayout>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
