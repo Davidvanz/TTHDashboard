@@ -53,8 +53,9 @@ export default function Bookings() {
     queryKey: ['bookingComData', selectedYear],
     queryFn: async () => {
       console.log('Fetching Booking.com data for year:', selectedYear);
+      // Note: The table name is "Booking.com Data" with a space
       const { data, error } = await supabase
-        .from('Booking.com Data')
+        .from('"Booking.com Data"')
         .select('*')
         .eq('Year', selectedYear);
       
