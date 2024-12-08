@@ -62,7 +62,7 @@ export default function Bookings() {
         console.error('Error fetching Booking.com data:', error);
         throw error;
       }
-      console.log('Booking.com data:', data);
+      console.log('Raw Booking.com data:', data);
       return data;
     }
   });
@@ -71,7 +71,12 @@ export default function Bookings() {
   const totalBookings = yearlyStats?.total_bookings || 0;
   
   // Count all rows in Booking.com Data as Booking.com bookings
-  const bookingComTotal = bookingComData?.length || 0;
+  const bookingComTotal = bookingComData?.reduce((total, booking) => {
+    const reservations = parseInt(booking.Reservations?.replace(/,/g, '') || '0', 10);
+    console.log(`Processing booking from ${booking.Country}: ${booking.Reservations} -> ${reservations}`);
+    return total + (isNaN(reservations) ? 0 : reservations);
+  }, 0) || 0;
+  
   console.log('Total Booking.com bookings:', bookingComTotal);
   
   // Direct bookings are the remaining bookings
