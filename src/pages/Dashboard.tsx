@@ -14,7 +14,6 @@ const Dashboard = () => {
   const [selectedYear, setSelectedYear] = useState<2023 | 2024>(2024);
   const navigate = useNavigate();
 
-  // Check authentication
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -26,7 +25,6 @@ const Dashboard = () => {
     checkAuth();
   }, [navigate]);
 
-  // Query for yearly statistics
   const { data: currentYearStats } = useQuery({
     queryKey: ['yearlyStats', selectedYear],
     queryFn: async () => {
@@ -46,7 +44,6 @@ const Dashboard = () => {
     }
   });
 
-  // Query for previous year statistics
   const { data: previousYearStats } = useQuery({
     queryKey: ['yearlyStats', selectedYear - 1],
     queryFn: async () => {
@@ -64,7 +61,6 @@ const Dashboard = () => {
     }
   });
 
-  // Query for monthly statistics - Updated with correct column case
   const { data: monthlyStats } = useQuery({
     queryKey: ['monthlyStats', selectedYear],
     queryFn: async () => {
@@ -84,22 +80,21 @@ const Dashboard = () => {
     }
   });
 
-  // Format currency
+  // Format currency to South African Rand
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-ZA', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'ZAR',
       maximumFractionDigits: 0,
     }).format(value);
   };
 
-  // Calculate year-over-year change
+  // Calculate year-over-year change with 2 decimal places
   const calculateYoYChange = (current: number | undefined, previous: number | undefined) => {
     if (!current || !previous) return 0;
-    return ((current - previous) / previous) * 100;
+    return Number(((current - previous) / previous * 100).toFixed(2));
   };
 
-  // Calculate occupancy rate based on room nights
   const calculateOccupancyRate = (roomNights: number) => {
     const totalPossibleNights = 365 * TOTAL_ROOMS;
     return (roomNights / totalPossibleNights) * 100;
@@ -149,13 +144,13 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Revenue"
-          value={currentYearStats ? formatCurrency(currentYearStats.total_revenue) : '$0'}
+          value={currentYearStats ? formatCurrency(currentYearStats.total_revenue) : 'R0'}
           trend={revenueChange}
           icon={<DollarSign className="w-4 h-4 text-primary" />}
         />
         <StatCard
           title="Average Rate"
-          value={currentYearStats ? formatCurrency(currentYearStats.avg_rate) : '$0'}
+          value={currentYearStats ? formatCurrency(currentYearStats.avg_rate) : 'R0'}
           trend={avgRateChange}
           icon={<Percent className="w-4 h-4 text-primary" />}
         />
@@ -196,7 +191,7 @@ const Dashboard = () => {
             <BarChart data={monthlyStats}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
-                dataKey="Arrival_Month" // Updated to match correct column case
+                dataKey="Arrival_Month"
                 tickFormatter={(value) => value.substring(0, 3)}
               />
               <YAxis />
