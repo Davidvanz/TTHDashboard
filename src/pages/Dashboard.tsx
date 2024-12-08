@@ -183,6 +183,7 @@ const Dashboard = () => {
           }
           trend={cancellationChange}
           icon={<XCircle className="w-4 h-4 text-primary" />}
+          invertTrendColors={true}
         />
       </div>
 

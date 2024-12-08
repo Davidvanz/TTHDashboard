@@ -6,10 +6,12 @@ interface StatCardProps {
   value: string;
   trend: number;
   icon: React.ReactNode;
+  invertTrendColors?: boolean;
 }
 
-export function StatCard({ title, value, trend, icon }: StatCardProps) {
-  const isPositive = trend > 0;
+export function StatCard({ title, value, trend, icon, invertTrendColors = false }: StatCardProps) {
+  // For cancellation rate, we invert the logic of what's considered positive
+  const isPositive = invertTrendColors ? trend < 0 : trend > 0;
   
   return (
     <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
