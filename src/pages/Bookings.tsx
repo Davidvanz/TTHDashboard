@@ -1,21 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PieChart, Pie, Cell, Legend, Tooltip } from "recharts";
 
-const Bookings = () => {
+const COLORS = {
+  BOOKING_COM: '#0052CC',
+  DIRECT: '#00875A',
+};
+
+export default function Bookings() {
   const navigate = useNavigate();
-  const [selectedSource, setSelectedSource] = useState(null);
-  const [showDetails, setShowDetails] = useState(false);
 
   // Check authentication
   useEffect(() => {
@@ -30,7 +33,7 @@ const Bookings = () => {
   }, [navigate]);
 
   // Query for Booking.com data
-  const { data: bookingComData, isLoading: isLoadingBookingCom } = useQuery({
+  const { data: bookingComData } = useQuery({
     queryKey: ['bookingComData'],
     queryFn: async () => {
       console.log('Fetching Booking.com data');
@@ -47,8 +50,8 @@ const Bookings = () => {
     }
   });
 
-  // Query for Revenue data to get other booking sources
-  const { data: revenueData, isLoading: isLoadingRevenue } = useQuery({
+  // Query for Revenue data
+  const { data: revenueData } = useQuery({
     queryKey: ['revenueData'],
     queryFn: async () => {
       console.log('Fetching revenue data');
@@ -65,29 +68,30 @@ const Bookings = () => {
     }
   });
 
-  if (isLoadingBookingCom || isLoadingRevenue) {
-    return <div className="p-8">Loading...</div>;
-  }
+  // Dialog state
+  const [showDetails, setShowDetails] = useState(false);
+  const [selectedSource, setSelectedSource] = useState(null);
 
-  // Process data for the pie chart
+  // Calculate totals for pie chart
   const bookingComTotal = bookingComData?.reduce((acc, curr) => 
     acc + (parseInt(curr.Reservations) || 0), 0) || 0;
-  
-  const otherBookingsTotal = revenueData?.length || 0;
+  const directBookingsTotal = revenueData?.length || 0;
 
   const pieData = [
-    { name: 'Booking.com', value: bookingComTotal, fill: '#0052CC' },
-    { name: 'Direct Bookings', value: otherBookingsTotal, fill: '#00875A' },
+    { name: 'Booking.com', value: bookingComTotal, fill: COLORS.BOOKING_COM },
+    { name: 'Direct Bookings', value: directBookingsTotal, fill: COLORS.DIRECT },
   ];
 
+  // Handle pie segment click
   const handleSourceClick = (entry) => {
-    console.log("Clicked entry:", entry);
-    if (entry && entry.payload) {
+    console.log('Clicked pie segment:', entry);
+    if (entry?.payload) {
       setSelectedSource(entry.payload);
       setShowDetails(true);
     }
   };
 
+  // Render details based on selected source
   const renderSourceDetails = () => {
     if (!selectedSource) return null;
 
@@ -95,7 +99,7 @@ const Bookings = () => {
       return (
         <div className="space-y-4">
           {bookingComData?.map((booking, index) => (
-            <Card key={`${booking.Country}-${index}`} className="w-full">
+            <Card key={`${booking.Country}-${index}`}>
               <CardHeader>
                 <CardTitle>{booking.Country}</CardTitle>
               </CardHeader>
@@ -117,44 +121,44 @@ const Bookings = () => {
           ))}
         </div>
       );
-    } else {
-      return (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Room Type</TableHead>
-              <TableHead>Guest</TableHead>
-              <TableHead>Revenue</TableHead>
-              <TableHead>Season</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {revenueData?.map((booking, index) => (
-              <TableRow key={`${booking.Guest}-${index}`}>
-                <TableCell>{booking.Room_Type}</TableCell>
-                <TableCell>{booking.Guest}</TableCell>
-                <TableCell>{booking.Revenue}</TableCell>
-                <TableCell>{booking.Season}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      );
     }
+
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Room Type</TableHead>
+            <TableHead>Guest</TableHead>
+            <TableHead>Revenue</TableHead>
+            <TableHead>Season</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {revenueData?.map((booking, index) => (
+            <TableRow key={`${booking.Guest}-${index}`}>
+              <TableCell>{booking.Room_Type}</TableCell>
+              <TableCell>{booking.Guest}</TableCell>
+              <TableCell>{booking.Revenue}</TableCell>
+              <TableCell>{booking.Season}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
   };
 
   return (
-    <div className="space-y-8 p-8">
+    <div className="space-y-8">
       <h1 className="text-3xl font-bold">Source of Bookings</h1>
       
-      {/* Pie Chart */}
-      <Card className="w-full">
+      {/* Pie Chart Card */}
+      <Card>
         <CardHeader>
           <CardTitle>Booking Sources Distribution</CardTitle>
         </CardHeader>
         <CardContent>
-          <div style={{ width: '100%', height: 400 }}>
-            <PieChart width={400} height={400} style={{ margin: '0 auto' }}>
+          <div className="flex justify-center items-center h-[400px]">
+            <PieChart width={400} height={400}>
               <Pie
                 data={pieData}
                 dataKey="value"
@@ -162,7 +166,7 @@ const Bookings = () => {
                 cx="50%"
                 cy="50%"
                 outerRadius={150}
-                label={(entry) => entry.name}
+                label={(entry) => `${entry.name}: ${entry.value}`}
                 onClick={handleSourceClick}
                 className="cursor-pointer"
               >
@@ -190,6 +194,4 @@ const Bookings = () => {
       </Dialog>
     </div>
   );
-};
-
-export default Bookings;
+}
