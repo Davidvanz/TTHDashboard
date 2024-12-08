@@ -7,6 +7,7 @@ import { DashboardLayout } from "./components/DashboardLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Bookings from "./pages/Bookings";
+import Recommendations from "./pages/Recommendations";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -47,7 +48,7 @@ const App = () => {
             } />
             <Route path="/recommendations" element={
               <DashboardLayout>
-                <div className="p-8">AI Recommendations (Coming Soon)</div>
+                <Recommendations />
               </DashboardLayout>
             } />
           </Routes>
