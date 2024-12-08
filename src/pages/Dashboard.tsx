@@ -5,14 +5,16 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
+import { ChartContainer } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { useToast } from "@/components/ui/use-toast";
 
 const TOTAL_ROOMS = 7;
 
 const Dashboard = () => {
   const [selectedYear, setSelectedYear] = useState<2023 | 2024>(2024);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -20,9 +22,19 @@ const Dashboard = () => {
       if (!session) {
         console.log("No active session found, redirecting to login");
         navigate("/login");
+        return;
       }
     };
     checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        console.log("User signed out, redirecting to login");
+        navigate("/login");
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const { data: currentYearStats } = useQuery({
@@ -133,11 +145,29 @@ const Dashboard = () => {
     previousYearStats?.cancellations
   );
 
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out.",
+      });
+      navigate("/login");
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-8 p-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Dashboard Overview</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <Button
             variant={selectedYear === 2023 ? "default" : "outline"}
             onClick={() => setSelectedYear(2023)}
@@ -149,6 +179,12 @@ const Dashboard = () => {
             onClick={() => setSelectedYear(2024)}
           >
             2024
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleSignOut}
+          >
+            Sign Out
           </Button>
         </div>
       </div>
