@@ -17,7 +17,7 @@ const Dashboard = () => {
         .from('monthly_statistics')
         .select('*')
         .order('year', { ascending: false })
-        .order('Arrival_Month_Num', { ascending: false })  // Fixed case sensitivity
+        .order('Arrival_Month_Num', { ascending: false })
         .limit(1);
       
       if (error) {
@@ -50,7 +50,7 @@ const Dashboard = () => {
   });
 
   const currentStats = timeframe === "month" ? monthlyStats : yearlyStats;
-  const previousStats = timeframe === "month" ? monthlyStats : yearlyStats;
+  const previousStats = timeframe === "month" ? monthlyStats : yearlyStats; // We'll implement previous period comparison later
 
   // Calculate trends (comparing with previous period)
   const calculateTrend = (current: number, previous: number) => {
