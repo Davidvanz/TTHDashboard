@@ -1,87 +1,60 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { DashboardLayout } from "@/components/DashboardLayout";
-import Dashboard from "@/pages/Dashboard";
-import Bookings from "@/pages/Bookings";
-import RoomStatistics from "@/pages/RoomStatistics";
-import Login from "@/pages/Login";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { DashboardLayout } from "./components/DashboardLayout";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import Bookings from "./pages/Bookings";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const queryClient = new QueryClient();
 
-function App() {
+const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // Check initial auth state
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
-      console.log("Initial auth check:", !!session);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", event, session);
+    supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session);
     });
-
-    return () => subscription.unsubscribe();
   }, []);
-
-  // Show loading state while checking authentication
-  if (isAuthenticated === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
 
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Router>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
           <Routes>
-            {/* Redirect from root to dashboard if authenticated */}
-            <Route
-              path="/"
-              element={
-                isAuthenticated ? (
-                  <Navigate to="/dashboard" replace />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
-            
-            {/* Login route - redirect to dashboard if already authenticated */}
-            <Route
-              path="/login"
-              element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />}
-            />
-
-            {/* Protected routes - must be authenticated */}
-            <Route
-              path="/dashboard"
-              element={isAuthenticated ? <DashboardLayout /> : <Navigate to="/login" replace />}
-            >
-              <Route index element={<Dashboard />} />
-              <Route path="bookings" element={<Bookings />} />
-              <Route path="room-statistics" element={<RoomStatistics />} />
-            </Route>
-
-            {/* Catch all route - redirect to login if not authenticated */}
-            <Route
-              path="*"
-              element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />}
-            />
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={
+              <DashboardLayout>
+                <Dashboard />
+              </DashboardLayout>
+            } />
+            <Route path="/bookings" element={
+              <DashboardLayout>
+                <Bookings />
+              </DashboardLayout>
+            } />
+            <Route path="/rooms" element={
+              <DashboardLayout>
+                <div className="p-8">Room Statistics (Coming Soon)</div>
+              </DashboardLayout>
+            } />
+            <Route path="/recommendations" element={
+              <DashboardLayout>
+                <div className="p-8">AI Recommendations (Coming Soon)</div>
+              </DashboardLayout>
+            } />
           </Routes>
-        </Router>
+        </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );
-}
+};
 
 export default App;

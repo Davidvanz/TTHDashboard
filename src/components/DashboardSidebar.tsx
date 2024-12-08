@@ -1,49 +1,48 @@
-import { Link, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { LayoutDashboard, CalendarDays, BedDouble } from "lucide-react";
+import { Home, BookOpen, Hotel, Lightbulb } from "lucide-react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import { useNavigate } from "react-router-dom";
 
-const links = [
-  {
-    title: "Dashboard",
-    href: "/",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Bookings",
-    href: "/bookings",
-    icon: CalendarDays,
-  },
-  {
-    title: "Room Statistics",
-    href: "/room-statistics",
-    icon: BedDouble,
-  },
+const menuItems = [
+  { title: "Dashboard", icon: Home, path: "/dashboard" },
+  { title: "Source of Bookings", icon: BookOpen, path: "/bookings" },
+  { title: "Room Statistics", icon: Hotel, path: "/rooms" },
+  { title: "AI Recommendations", icon: Lightbulb, path: "/recommendations" },
 ];
 
 export function DashboardSidebar() {
-  const location = useLocation();
+  const navigate = useNavigate();
 
   return (
-    <div className="space-y-4 py-4">
-      <div className="px-3 py-2">
-        <div className="space-y-1">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              to={link.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:text-primary",
-                location.pathname === link.href
-                  ? "bg-muted text-primary"
-                  : "text-muted-foreground"
-              )}
-            >
-              <link.icon className="h-4 w-4" />
-              {link.title}
-            </Link>
-          ))}
+    <Sidebar>
+      <SidebarContent>
+        <div className="p-6">
+          <h1 className="text-xl font-bold">The Thatch House</h1>
         </div>
-      </div>
-    </div>
+        <SidebarGroup>
+          <SidebarGroupLabel>Menu</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {menuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton onClick={() => navigate(item.path)}>
+                    <item.icon className="w-4 h-4 mr-2" />
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
   );
 }
