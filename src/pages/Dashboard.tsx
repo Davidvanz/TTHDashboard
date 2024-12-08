@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
 
-const TOTAL_ROOMS = 7; // Updated to reflect correct number of rooms
+const TOTAL_ROOMS = 7;
 
 const Dashboard = () => {
   const [selectedYear, setSelectedYear] = useState<2023 | 2024>(2024);
@@ -64,20 +64,22 @@ const Dashboard = () => {
     }
   });
 
-  // Query for monthly statistics
+  // Query for monthly statistics - Updated with correct column case
   const { data: monthlyStats } = useQuery({
     queryKey: ['monthlyStats', selectedYear],
     queryFn: async () => {
+      console.log('Fetching monthly statistics for year:', selectedYear);
       const { data, error } = await supabase
         .from('monthly_statistics')
         .select('*')
         .eq('year', selectedYear)
-        .order('arrival_month_num', { ascending: true });
+        .order('Arrival_Month_Num', { ascending: true }); // Fixed column name case
       
       if (error) {
         console.error('Error fetching monthly stats:', error);
         throw error;
       }
+      console.log('Monthly stats data:', data);
       return data;
     }
   });
@@ -194,7 +196,7 @@ const Dashboard = () => {
             <BarChart data={monthlyStats}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
-                dataKey="arrival_month" 
+                dataKey="Arrival_Month" // Updated to match correct column case
                 tickFormatter={(value) => value.substring(0, 3)}
               />
               <YAxis />
@@ -205,7 +207,7 @@ const Dashboard = () => {
                       <div className="grid gap-2">
                         <div className="flex items-center justify-between gap-2">
                           <span className="font-medium">
-                            {payload[0].payload.arrival_month}
+                            {payload[0].payload.Arrival_Month}
                           </span>
                           <span className="font-medium">
                             {formatCurrency(payload[0].value as number)}
