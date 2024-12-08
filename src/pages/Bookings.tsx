@@ -11,15 +11,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PieChart, Pie, Cell, Legend, Tooltip } from "recharts";
-
-const COLORS = {
-  BOOKING_COM: '#0052CC',
-  DIRECT: '#00875A',
-};
 
 export default function Bookings() {
   const navigate = useNavigate();
+  const [showDetails, setShowDetails] = useState(false);
+  const [selectedSource, setSelectedSource] = useState(null);
 
   // Check authentication
   useEffect(() => {
@@ -69,27 +65,17 @@ export default function Bookings() {
     }
   });
 
-  // Dialog state
-  const [showDetails, setShowDetails] = useState(false);
-  const [selectedSource, setSelectedSource] = useState(null);
-
-  // Calculate totals for pie chart
+  // Calculate totals
   const bookingComTotal = bookingComData?.reduce((acc, curr) => 
     acc + (parseInt(curr.Reservations) || 0), 0) || 0;
   const directBookingsTotal = revenueData?.length || 0;
+  const totalBookings = bookingComTotal + directBookingsTotal;
 
-  const pieData = [
-    { name: 'Booking.com', value: bookingComTotal, fill: COLORS.BOOKING_COM },
-    { name: 'Direct Bookings', value: directBookingsTotal, fill: COLORS.DIRECT },
-  ];
-
-  // Handle pie segment click
-  const handleSourceClick = (entry) => {
-    console.log('Clicked pie segment:', entry);
-    if (entry?.payload) {
-      setSelectedSource(entry.payload);
-      setShowDetails(true);
-    }
+  // Handle card click
+  const handleSourceClick = (source) => {
+    console.log('Clicked source:', source);
+    setSelectedSource(source);
+    setShowDetails(true);
   };
 
   // Render details based on selected source
@@ -152,35 +138,38 @@ export default function Bookings() {
     <div className="space-y-8 p-8">
       <h1 className="text-3xl font-bold">Source of Bookings</h1>
       
-      {/* Pie Chart Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Booking Sources Distribution</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-center items-center h-[400px]">
-            <PieChart width={400} height={400}>
-              <Pie
-                data={pieData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={150}
-                label={(entry) => `${entry.name}: ${entry.value}`}
-                onClick={handleSourceClick}
-                className="cursor-pointer"
-              >
-                {pieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend verticalAlign="bottom" height={36} />
-            </PieChart>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Booking Sources Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => handleSourceClick({ name: 'Booking.com' })}
+        >
+          <CardHeader>
+            <CardTitle>Booking.com</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold">{bookingComTotal}</div>
+            <p className="text-muted-foreground">
+              {((bookingComTotal / totalBookings) * 100).toFixed(1)}% of total bookings
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => handleSourceClick({ name: 'Direct Bookings' })}
+        >
+          <CardHeader>
+            <CardTitle>Direct Bookings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold">{directBookingsTotal}</div>
+            <p className="text-muted-foreground">
+              {((directBookingsTotal / totalBookings) * 100).toFixed(1)}% of total bookings
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Details Dialog */}
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
