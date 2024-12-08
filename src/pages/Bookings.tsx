@@ -70,14 +70,13 @@ export default function Bookings() {
   // Calculate totals and percentages
   const totalBookings = yearlyStats?.total_bookings || 0;
   
-  // Parse Booking.com reservations, ensuring we handle the text value correctly
-  const bookingComTotal = bookingComData?.reduce((total, entry) => {
-    const reservations = parseInt(entry.Reservations?.replace(/,/g, '') || '0', 10);
-    console.log('Parsing Booking.com reservations:', entry.Reservations, 'to:', reservations);
-    return total + (isNaN(reservations) ? 0 : reservations);
-  }, 0) || 0;
+  // Count all rows in Booking.com Data as Booking.com bookings
+  const bookingComTotal = bookingComData?.length || 0;
+  console.log('Total Booking.com bookings:', bookingComTotal);
   
+  // Direct bookings are the remaining bookings
   const directBookingsTotal = totalBookings - bookingComTotal;
+  console.log('Total direct bookings:', directBookingsTotal);
 
   // Calculate percentages
   const bookingComPercentage = totalBookings > 0 
