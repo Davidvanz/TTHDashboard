@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
 
 const TOTAL_ROOMS = 7; // Updated to reflect correct number of rooms
 
@@ -25,7 +27,7 @@ const Dashboard = () => {
   }, [navigate]);
 
   // Query for yearly statistics
-  const { data: yearlyStats } = useQuery({
+  const { data: currentYearStats } = useQuery({
     queryKey: ['yearlyStats', selectedYear],
     queryFn: async () => {
       console.log('Fetching yearly statistics for year:', selectedYear);
@@ -44,6 +46,42 @@ const Dashboard = () => {
     }
   });
 
+  // Query for previous year statistics
+  const { data: previousYearStats } = useQuery({
+    queryKey: ['yearlyStats', selectedYear - 1],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('yearly_statistics')
+        .select('*')
+        .eq('year', selectedYear - 1)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching previous year stats:', error);
+        throw error;
+      }
+      return data;
+    }
+  });
+
+  // Query for monthly statistics
+  const { data: monthlyStats } = useQuery({
+    queryKey: ['monthlyStats', selectedYear],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('monthly_statistics')
+        .select('*')
+        .eq('year', selectedYear)
+        .order('arrival_month_num', { ascending: true });
+      
+      if (error) {
+        console.error('Error fetching monthly stats:', error);
+        throw error;
+      }
+      return data;
+    }
+  });
+
   // Format currency
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -54,20 +92,40 @@ const Dashboard = () => {
   };
 
   // Calculate year-over-year change
-  const calculateYoYChange = (current: number, previous: number) => {
-    if (!previous) return 0;
+  const calculateYoYChange = (current: number | undefined, previous: number | undefined) => {
+    if (!current || !previous) return 0;
     return ((current - previous) / previous) * 100;
   };
 
   // Calculate occupancy rate based on room nights
   const calculateOccupancyRate = (roomNights: number) => {
-    // Total possible room nights in a year (365 days * number of rooms)
     const totalPossibleNights = 365 * TOTAL_ROOMS;
     return (roomNights / totalPossibleNights) * 100;
   };
 
+  // Calculate YoY changes
+  const revenueChange = calculateYoYChange(
+    currentYearStats?.total_revenue,
+    previousYearStats?.total_revenue
+  );
+
+  const avgRateChange = calculateYoYChange(
+    currentYearStats?.avg_rate,
+    previousYearStats?.avg_rate
+  );
+
+  const occupancyChange = calculateYoYChange(
+    currentYearStats?.total_room_nights ? calculateOccupancyRate(currentYearStats.total_room_nights) : 0,
+    previousYearStats?.total_room_nights ? calculateOccupancyRate(previousYearStats.total_room_nights) : 0
+  );
+
+  const cancellationChange = calculateYoYChange(
+    currentYearStats?.cancellations,
+    previousYearStats?.cancellations
+  );
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Dashboard Overview</h1>
         <div className="flex gap-2">
@@ -89,46 +147,85 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Revenue"
-          value={yearlyStats ? formatCurrency(yearlyStats.total_revenue) : '$0'}
-          trend={calculateYoYChange(
-            yearlyStats?.total_revenue || 0,
-            yearlyStats?.total_revenue || 0
-          )}
+          value={currentYearStats ? formatCurrency(currentYearStats.total_revenue) : '$0'}
+          trend={revenueChange}
           icon={<DollarSign className="w-4 h-4 text-primary" />}
         />
         <StatCard
           title="Average Rate"
-          value={yearlyStats ? formatCurrency(yearlyStats.avg_rate) : '$0'}
-          trend={calculateYoYChange(
-            yearlyStats?.avg_rate || 0,
-            yearlyStats?.avg_rate || 0
-          )}
+          value={currentYearStats ? formatCurrency(currentYearStats.avg_rate) : '$0'}
+          trend={avgRateChange}
           icon={<Percent className="w-4 h-4 text-primary" />}
         />
         <StatCard
           title="Occupancy Rate"
-          value={yearlyStats ? 
-            `${Math.round(calculateOccupancyRate(yearlyStats.total_room_nights))}%` 
+          value={currentYearStats ? 
+            `${Math.round(calculateOccupancyRate(currentYearStats.total_room_nights))}%` 
             : '0%'
           }
-          trend={calculateYoYChange(
-            yearlyStats?.total_room_nights || 0,
-            yearlyStats?.total_room_nights || 0
-          )}
+          trend={occupancyChange}
           icon={<BedDouble className="w-4 h-4 text-primary" />}
         />
         <StatCard
           title="Cancellation Rate"
-          value={yearlyStats ? 
-            `${Math.round((yearlyStats.cancellations / yearlyStats.total_bookings) * 100)}%`
+          value={currentYearStats ? 
+            `${Math.round((currentYearStats.cancellations / currentYearStats.total_bookings) * 100)}%`
             : '0%'
           }
-          trend={-calculateYoYChange(
-            yearlyStats?.cancellations || 0,
-            yearlyStats?.cancellations || 0
-          )}
+          trend={cancellationChange}
           icon={<XCircle className="w-4 h-4 text-primary" />}
         />
+      </div>
+
+      {/* Monthly Performance Chart */}
+      <div className="mt-8">
+        <h2 className="text-2xl font-semibold mb-4">Monthly Performance</h2>
+        <div className="h-[400px] w-full">
+          <ChartContainer
+            config={{
+              revenue: {
+                theme: {
+                  light: "hsl(var(--primary))",
+                  dark: "hsl(var(--primary))",
+                },
+              },
+            }}
+          >
+            <BarChart data={monthlyStats}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="arrival_month" 
+                tickFormatter={(value) => value.substring(0, 3)}
+              />
+              <YAxis />
+              <Tooltip content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  return (
+                    <div className="rounded-lg border bg-background p-2 shadow-sm">
+                      <div className="grid gap-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium">
+                            {payload[0].payload.arrival_month}
+                          </span>
+                          <span className="font-medium">
+                            {formatCurrency(payload[0].value as number)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }
+                return null
+              }} />
+              <Bar
+                dataKey="total_revenue"
+                fill="currentColor"
+                className="fill-primary"
+                radius={[4, 4, 0, 0]}
+              />
+            </BarChart>
+          </ChartContainer>
+        </div>
       </div>
     </div>
   );
