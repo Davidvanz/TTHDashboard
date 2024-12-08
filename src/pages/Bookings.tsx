@@ -11,7 +11,7 @@ export default function Bookings() {
   const navigate = useNavigate();
   const [showDetails, setShowDetails] = useState(false);
   const [selectedSource, setSelectedSource] = useState(null);
-  const [selectedYear, setSelectedYear] = useState(2025); // Default to 2025
+  const [selectedYear, setSelectedYear] = useState(2025);
 
   // Available years for selection
   const availableYears = [2023, 2024, 2025];
@@ -69,9 +69,14 @@ export default function Bookings() {
 
   // Calculate totals and percentages
   const totalBookings = yearlyStats?.total_bookings || 0;
-  const bookingComTotal = bookingComData?.[0]?.Reservations 
-    ? parseInt(bookingComData[0].Reservations) 
-    : 0;
+  
+  // Parse Booking.com reservations, ensuring we handle the text value correctly
+  const bookingComTotal = bookingComData?.reduce((total, entry) => {
+    const reservations = parseInt(entry.Reservations?.replace(/,/g, '') || '0', 10);
+    console.log('Parsing Booking.com reservations:', entry.Reservations, 'to:', reservations);
+    return total + (isNaN(reservations) ? 0 : reservations);
+  }, 0) || 0;
+  
   const directBookingsTotal = totalBookings - bookingComTotal;
 
   // Calculate percentages
