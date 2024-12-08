@@ -32,15 +32,21 @@ const Dashboard = () => {
       const { data, error } = await supabase
         .from('yearly_statistics')
         .select('*')
-        .eq('year', selectedYear)
-        .single();
+        .eq('year', selectedYear);
       
       if (error) {
         console.error('Error fetching yearly stats:', error);
         throw error;
       }
       console.log('Yearly stats data:', data);
-      return data;
+      // Return first item if exists, otherwise return default values
+      return data?.[0] || {
+        total_revenue: 0,
+        avg_rate: 0,
+        total_bookings: 0,
+        total_room_nights: 0,
+        cancellations: 0
+      };
     }
   });
 
@@ -50,14 +56,20 @@ const Dashboard = () => {
       const { data, error } = await supabase
         .from('yearly_statistics')
         .select('*')
-        .eq('year', selectedYear - 1)
-        .single();
+        .eq('year', selectedYear - 1);
       
       if (error) {
         console.error('Error fetching previous year stats:', error);
         throw error;
       }
-      return data;
+      // Return first item if exists, otherwise return default values
+      return data?.[0] || {
+        total_revenue: 0,
+        avg_rate: 0,
+        total_bookings: 0,
+        total_room_nights: 0,
+        cancellations: 0
+      };
     }
   });
 
@@ -69,14 +81,14 @@ const Dashboard = () => {
         .from('monthly_statistics')
         .select('*')
         .eq('year', selectedYear)
-        .order('Arrival_Month_Num', { ascending: true }); // Fixed column name case
+        .order('Arrival_Month_Num', { ascending: true });
       
       if (error) {
         console.error('Error fetching monthly stats:', error);
         throw error;
       }
       console.log('Monthly stats data:', data);
-      return data;
+      return data || [];
     }
   });
 
