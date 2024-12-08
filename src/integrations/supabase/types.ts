@@ -56,7 +56,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      monthly_statistics: {
+        Row: {
+          Arrival_Month: string | null
+          Arrival_Month_Num: number | null
+          avg_rate: number | null
+          cancellations: number | null
+          total_bookings: number | null
+          total_revenue: number | null
+          total_room_nights: number | null
+          year: number | null
+        }
+        Relationships: []
+      }
+      yearly_statistics: {
+        Row: {
+          avg_rate: number | null
+          cancellations: number | null
+          total_bookings: number | null
+          total_revenue: number | null
+          total_room_nights: number | null
+          year: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

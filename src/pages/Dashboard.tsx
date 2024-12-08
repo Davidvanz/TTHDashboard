@@ -2,27 +2,70 @@ import { useState } from "react";
 import { DollarSign, Percent, BedDouble, XCircle } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const [timeframe, setTimeframe] = useState<"month" | "year">("month");
 
-  // Placeholder data - will be replaced with real data
-  const stats = {
-    month: {
-      revenue: { value: "$45,231", trend: 12.5 },
-      averageRate: { value: "$195", trend: -2.3 },
-      occupancyRate: { value: "78%", trend: 5.2 },
-      cancellationRate: { value: "12%", trend: -1.8 },
-    },
-    year: {
-      revenue: { value: "$534,762", trend: 8.7 },
-      averageRate: { value: "$189", trend: 3.1 },
-      occupancyRate: { value: "82%", trend: 7.5 },
-      cancellationRate: { value: "10%", trend: -2.4 },
-    },
+  // Query for monthly statistics
+  const { data: monthlyStats } = useQuery({
+    queryKey: ['monthlyStats'],
+    queryFn: async () => {
+      console.log('Fetching monthly statistics...');
+      const { data, error } = await supabase
+        .from('monthly_statistics')
+        .select('*')
+        .order('year', { ascending: false })
+        .order('arrival_month_num', { ascending: false })
+        .limit(1);
+      
+      if (error) {
+        console.error('Error fetching monthly stats:', error);
+        throw error;
+      }
+      console.log('Monthly stats data:', data);
+      return data?.[0];
+    }
+  });
+
+  // Query for yearly statistics
+  const { data: yearlyStats } = useQuery({
+    queryKey: ['yearlyStats'],
+    queryFn: async () => {
+      console.log('Fetching yearly statistics...');
+      const { data, error } = await supabase
+        .from('yearly_statistics')
+        .select('*')
+        .order('year', { ascending: false })
+        .limit(1);
+      
+      if (error) {
+        console.error('Error fetching yearly stats:', error);
+        throw error;
+      }
+      console.log('Yearly stats data:', data);
+      return data?.[0];
+    }
+  });
+
+  const currentStats = timeframe === "month" ? monthlyStats : yearlyStats;
+  const previousStats = timeframe === "month" ? monthlyStats : yearlyStats;
+
+  // Calculate trends (comparing with previous period)
+  const calculateTrend = (current: number, previous: number) => {
+    if (!previous) return 0;
+    return ((current - previous) / previous) * 100;
   };
 
-  const currentStats = stats[timeframe];
+  // Format currency
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
 
   return (
     <div className="space-y-8">
@@ -47,26 +90,44 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Revenue"
-          value={currentStats.revenue.value}
-          trend={currentStats.revenue.trend}
+          value={currentStats ? formatCurrency(currentStats.total_revenue) : '$0'}
+          trend={calculateTrend(
+            currentStats?.total_revenue || 0,
+            previousStats?.total_revenue || 0
+          )}
           icon={<DollarSign className="w-4 h-4 text-primary" />}
         />
         <StatCard
           title="Average Rate"
-          value={currentStats.averageRate.value}
-          trend={currentStats.averageRate.trend}
+          value={currentStats ? formatCurrency(currentStats.avg_rate) : '$0'}
+          trend={calculateTrend(
+            currentStats?.avg_rate || 0,
+            previousStats?.avg_rate || 0
+          )}
           icon={<Percent className="w-4 h-4 text-primary" />}
         />
         <StatCard
           title="Occupancy Rate"
-          value={currentStats.occupancyRate.value}
-          trend={currentStats.occupancyRate.trend}
+          value={currentStats ? 
+            `${Math.round((currentStats.total_room_nights / (timeframe === "month" ? 30 : 365)) * 100)}%` 
+            : '0%'
+          }
+          trend={calculateTrend(
+            currentStats?.total_room_nights || 0,
+            previousStats?.total_room_nights || 0
+          )}
           icon={<BedDouble className="w-4 h-4 text-primary" />}
         />
         <StatCard
           title="Cancellation Rate"
-          value={currentStats.cancellationRate.value}
-          trend={currentStats.cancellationRate.trend}
+          value={currentStats ? 
+            `${Math.round((currentStats.cancellations / currentStats.total_bookings) * 100)}%`
+            : '0%'
+          }
+          trend={-calculateTrend(
+            currentStats?.cancellations || 0,
+            previousStats?.cancellations || 0
+          )}
           icon={<XCircle className="w-4 h-4 text-primary" />}
         />
       </div>
