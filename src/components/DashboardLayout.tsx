@@ -12,10 +12,19 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         console.log("No active session found in DashboardLayout, redirecting to login");
-        navigate("/login");
+        navigate("/");
       }
     };
     checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        console.log("User signed out or session ended, redirecting to login");
+        navigate("/");
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   return (

@@ -6,15 +6,15 @@ import Login from "@/pages/Login";
 export const routes = [
   {
     path: "/",
-    element: <Dashboard />,
-  },
-  {
-    path: "/login",
     element: <Login />,
   },
   {
     path: "/dashboard",
     element: <Dashboard />,
+  },
+  {
+    path: "/login",
+    element: <Login />,
   },
   {
     path: "/bookings",

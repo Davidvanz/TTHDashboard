@@ -22,7 +22,7 @@ const Login = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log("Auth state changed:", event);
-        if (event === "SIGNED_IN") {
+        if (event === "SIGNED_IN" && session) {
           toast({
             title: "Welcome!",
             description: "You have successfully signed in.",
@@ -36,8 +36,8 @@ const Login = () => {
   }, [navigate, toast]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md space-y-4">
+    <div className="min-h-screen w-full flex items-center justify-center bg-background">
+      <div className="w-full max-w-md space-y-4 p-8">
         <div className="text-center mb-8">
           <img 
             src="/lovable-uploads/de099741-2aad-45da-b328-821900be6ce1.png" 
