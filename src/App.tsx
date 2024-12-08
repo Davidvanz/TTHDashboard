@@ -18,6 +18,7 @@ function App() {
     // Check initial auth state
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
+      console.log("Initial auth check:", !!session);
     });
 
     // Listen for auth changes
@@ -29,9 +30,13 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Wait for initial auth check
+  // Show loading state while checking authentication
   if (isAuthenticated === null) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
   }
 
   return (
@@ -39,18 +44,39 @@ function App() {
       <TooltipProvider>
         <Router>
           <Routes>
-            <Route
-              path="/login"
-              element={isAuthenticated ? <Navigate to="/" /> : <Login />}
-            />
+            {/* Redirect from root to dashboard if authenticated */}
             <Route
               path="/"
-              element={isAuthenticated ? <DashboardLayout /> : <Navigate to="/login" />}
+              element={
+                isAuthenticated ? (
+                  <Navigate to="/dashboard" replace />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            
+            {/* Login route - redirect to dashboard if already authenticated */}
+            <Route
+              path="/login"
+              element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />}
+            />
+
+            {/* Protected routes - must be authenticated */}
+            <Route
+              path="/dashboard"
+              element={isAuthenticated ? <DashboardLayout /> : <Navigate to="/login" replace />}
             >
               <Route index element={<Dashboard />} />
               <Route path="bookings" element={<Bookings />} />
               <Route path="room-statistics" element={<RoomStatistics />} />
             </Route>
+
+            {/* Catch all route - redirect to login if not authenticated */}
+            <Route
+              path="*"
+              element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />}
+            />
           </Routes>
         </Router>
       </TooltipProvider>
