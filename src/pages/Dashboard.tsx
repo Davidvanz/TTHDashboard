@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
-import { DollarSign, Percent, BedDouble, XCircle } from "lucide-react";
-import { StatCard } from "@/components/StatCard";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { ChartContainer } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useToast } from "@/components/ui/use-toast";
+import { DashboardStats } from "@/components/DashboardStats";
+import { MonthlyPerformanceChart } from "@/components/MonthlyPerformanceChart";
 
 const TOTAL_ROOMS = 7;
 
@@ -51,7 +49,6 @@ const Dashboard = () => {
         throw error;
       }
       console.log('Yearly stats data:', data);
-      // Return first item if exists, otherwise return default values
       return data?.[0] || {
         total_revenue: 0,
         avg_rate: 0,
@@ -74,7 +71,6 @@ const Dashboard = () => {
         console.error('Error fetching previous year stats:', error);
         throw error;
       }
-      // Return first item if exists, otherwise return default values
       return data?.[0] || {
         total_revenue: 0,
         avg_rate: 0,
@@ -189,90 +185,20 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Revenue"
-          value={currentYearStats ? formatCurrency(currentYearStats.total_revenue) : 'R0'}
-          trend={revenueChange}
-          icon={<DollarSign className="w-4 h-4 text-primary" />}
-        />
-        <StatCard
-          title="Average Rate"
-          value={currentYearStats ? formatCurrency(currentYearStats.avg_rate) : 'R0'}
-          trend={avgRateChange}
-          icon={<Percent className="w-4 h-4 text-primary" />}
-        />
-        <StatCard
-          title="Occupancy Rate"
-          value={currentYearStats ? 
-            `${Math.round(calculateOccupancyRate(currentYearStats.total_room_nights))}%` 
-            : '0%'
-          }
-          trend={occupancyChange}
-          icon={<BedDouble className="w-4 h-4 text-primary" />}
-        />
-        <StatCard
-          title="Cancellation Rate"
-          value={currentYearStats ? 
-            `${Math.round((currentYearStats.cancellations / currentYearStats.total_bookings) * 100)}%`
-            : '0%'
-          }
-          trend={cancellationChange}
-          icon={<XCircle className="w-4 h-4 text-primary" />}
-          invertTrendColors={true}
-        />
-      </div>
+      <DashboardStats
+        currentYearStats={currentYearStats}
+        formatCurrency={formatCurrency}
+        calculateOccupancyRate={calculateOccupancyRate}
+        revenueChange={revenueChange}
+        avgRateChange={avgRateChange}
+        occupancyChange={occupancyChange}
+        cancellationChange={cancellationChange}
+      />
 
-      {/* Monthly Performance Chart */}
-      <div className="mt-8">
-        <h2 className="text-2xl font-semibold mb-4">Monthly Performance</h2>
-        <div className="h-[150px] w-full"> {/* Changed from h-[200px] to h-[150px] */}
-          <ChartContainer
-            config={{
-              revenue: {
-                theme: {
-                  light: "hsl(var(--primary))",
-                  dark: "hsl(var(--primary))",
-                },
-              },
-            }}
-          >
-            <BarChart data={monthlyStats}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="Arrival_Month"
-                tickFormatter={(value) => value.substring(0, 3)}
-              />
-              <YAxis />
-              <Tooltip content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  return (
-                    <div className="rounded-lg border bg-background p-2 shadow-sm">
-                      <div className="grid gap-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-medium">
-                            {payload[0].payload.Arrival_Month}
-                          </span>
-                          <span className="font-medium">
-                            {formatCurrency(payload[0].value as number)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                }
-                return null
-              }} />
-              <Bar
-                dataKey="total_revenue"
-                fill="currentColor"
-                className="fill-primary"
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ChartContainer>
-        </div>
-      </div>
+      <MonthlyPerformanceChart
+        monthlyStats={monthlyStats || []}
+        formatCurrency={formatCurrency}
+      />
     </div>
   );
 };
