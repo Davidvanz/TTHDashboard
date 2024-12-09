@@ -63,14 +63,17 @@ const RoomStatistics = () => {
       }, {});
 
       // Calculate averages and occupancy rates
-      return Object.values(roomStatsMap).map(room => {
+      const roomStats = Object.values(roomStatsMap).map(room => {
         const daysInYear = selectedYear % 4 === 0 ? 366 : 365;
         return {
           ...room,
-          avg_rate: room.total_revenue / (room.total_nights || 1),
+          avg_rate: room.total_nights > 0 ? room.total_revenue / room.total_nights : 0,
           occupancy_rate: (room.total_nights / daysInYear) * 100,
         };
       });
+
+      // Sort rooms by total revenue in descending order
+      return roomStats.sort((a, b) => b.total_revenue - a.total_revenue);
     },
   });
 
