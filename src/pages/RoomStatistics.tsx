@@ -1,56 +1,36 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Calendar, TrendingUp } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DollarSign, Calendar, TrendingUp, Bed } from "lucide-react";
 
-interface RoomData {
-  Room_Description: string;
-  total_revenue: number;
+interface RoomYearlyStats {
+  year: number;
+  room_description: string;
   total_bookings: number;
-  avg_revenue_per_booking: number;
+  total_room_nights: number;
+  total_revenue: number;
+  avg_daily_rate: number;
+  occupancy_rate: number;
 }
 
 const RoomStatistics = () => {
   const { data: roomStats, isLoading } = useQuery({
-    queryKey: ['roomStatistics'],
+    queryKey: ['roomYearlyStatistics'],
     queryFn: async () => {
-      console.log('Fetching room statistics...');
+      console.log('Fetching room yearly statistics...');
       const { data, error } = await supabase
-        .from('RevenueData_2023-2025')
-        .select('Room_Description, Arrival, Revenue')
-        .not('Room_Description', 'is', null); // Ensure we only get rows with valid room descriptions
+        .from('room_yearly_statistics')
+        .select('*')
+        .order('year', { ascending: false });
 
       if (error) {
         console.error('Error fetching room statistics:', error);
         throw error;
       }
 
-      console.log('Raw data from database:', data);
-
-      // Process the data to get statistics per room
-      const roomMap = new Map<string, RoomData>();
-
-      data.forEach(booking => {
-        const existingData = roomMap.get(booking.Room_Description) || {
-          Room_Description: booking.Room_Description,
-          total_revenue: 0,
-          total_bookings: 0,
-          avg_revenue_per_booking: 0
-        };
-
-        existingData.total_revenue += booking.Revenue || 0;
-        existingData.total_bookings += 1;
-        roomMap.set(booking.Room_Description, existingData);
-      });
-
-      // Calculate averages and convert to array
-      const processedData = Array.from(roomMap.values()).map(room => ({
-        ...room,
-        avg_revenue_per_booking: room.total_revenue / room.total_bookings
-      }));
-
-      console.log('Processed room statistics:', processedData);
-      return processedData;
+      console.log('Room statistics data:', data);
+      return data as RoomYearlyStats[];
     }
   });
 
@@ -70,50 +50,100 @@ const RoomStatistics = () => {
     return <div className="p-8">No room statistics available.</div>;
   }
 
+  // Get the most recent year's data
+  const currentYear = Math.max(...roomStats.map(stat => stat.year));
+  const currentYearStats = roomStats.filter(stat => stat.year === currentYear);
+
+  // Calculate totals for the current year
+  const yearlyTotals = currentYearStats.reduce((acc, curr) => ({
+    total_revenue: acc.total_revenue + curr.total_revenue,
+    total_bookings: acc.total_bookings + curr.total_bookings,
+    total_room_nights: acc.total_room_nights + curr.total_room_nights,
+  }), {
+    total_revenue: 0,
+    total_bookings: 0,
+    total_room_nights: 0,
+  });
+
   return (
-    <div className="p-8 space-y-8">
-      <h1 className="text-3xl font-bold">Room Statistics</h1>
+    <div className="space-y-8">
+      <h1 className="text-3xl font-bold">Room Statistics ({currentYear})</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {roomStats.map((room) => (
-          <Card key={room.Room_Description} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="text-xl">{room.Room_Description}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <div className="p-2 bg-primary/10 rounded-full">
-                  <DollarSign className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Revenue</p>
-                  <p className="text-2xl font-bold">{formatCurrency(room.total_revenue)}</p>
-                </div>
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(yearlyTotals.total_revenue)}</div>
+          </CardContent>
+        </Card>
 
-              <div className="flex items-center space-x-4">
-                <div className="p-2 bg-primary/10 rounded-full">
-                  <Calendar className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Bookings</p>
-                  <p className="text-2xl font-bold">{room.total_bookings}</p>
-                </div>
-              </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{yearlyTotals.total_bookings}</div>
+          </CardContent>
+        </Card>
 
-              <div className="flex items-center space-x-4">
-                <div className="p-2 bg-primary/10 rounded-full">
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Average Revenue per Booking</p>
-                  <p className="text-2xl font-bold">{formatCurrency(room.avg_revenue_per_booking)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Room Nights</CardTitle>
+            <Bed className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{yearlyTotals.total_room_nights}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Average Occupancy</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {(currentYearStats.reduce((acc, curr) => acc + curr.occupancy_rate, 0) / currentYearStats.length).toFixed(1)}%
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Room Performance Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Room</TableHead>
+                <TableHead className="text-right">Revenue</TableHead>
+                <TableHead className="text-right">Bookings</TableHead>
+                <TableHead className="text-right">Room Nights</TableHead>
+                <TableHead className="text-right">Avg. Daily Rate</TableHead>
+                <TableHead className="text-right">Occupancy Rate</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {currentYearStats.map((stat) => (
+                <TableRow key={stat.room_description}>
+                  <TableCell className="font-medium">{stat.room_description}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(stat.total_revenue)}</TableCell>
+                  <TableCell className="text-right">{stat.total_bookings}</TableCell>
+                  <TableCell className="text-right">{stat.total_room_nights}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(stat.avg_daily_rate)}</TableCell>
+                  <TableCell className="text-right">{stat.occupancy_rate}%</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 };

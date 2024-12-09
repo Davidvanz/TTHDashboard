@@ -117,6 +117,18 @@ export type Database = {
         }
         Relationships: []
       }
+      room_yearly_statistics: {
+        Row: {
+          avg_daily_rate: number | null
+          occupancy_rate: number | null
+          room_description: string | null
+          total_bookings: number | null
+          total_revenue: number | null
+          total_room_nights: number | null
+          year: number | null
+        }
+        Relationships: []
+      }
       yearly_statistics: {
         Row: {
           avg_rate: number | null
