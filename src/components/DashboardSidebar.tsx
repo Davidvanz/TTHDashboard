@@ -1,4 +1,4 @@
-import { Home, BookOpen, Hotel, Lightbulb } from "lucide-react";
+import { Home, BookOpen, Lightbulb } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -14,7 +14,6 @@ import { useNavigate } from "react-router-dom";
 const menuItems = [
   { title: "Dashboard", icon: Home, path: "/dashboard" },
   { title: "Source of Bookings", icon: BookOpen, path: "/bookings" },
-  { title: "Room Statistics", icon: Hotel, path: "/rooms" },
   { title: "AI Recommendations", icon: Lightbulb, path: "/recommendations" },
 ];
 
