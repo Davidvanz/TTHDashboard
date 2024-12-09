@@ -112,7 +112,7 @@ const RoomStatistics = () => {
                 <TableHead className="text-right">Revenue</TableHead>
                 <TableHead className="text-right">Room Nights</TableHead>
                 <TableHead className="text-right">Avg. Daily Rate</TableHead>
-                <TableHead className="text-right">Weighting</TableHead>
+                <TableHead className="text-right">Occupancy Rate per Room</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
