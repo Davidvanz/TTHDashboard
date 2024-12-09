@@ -1,16 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface RoomStats {
   roomDescription: string;
@@ -44,8 +37,8 @@ const RoomStatistics = () => {
       
       data.forEach((booking) => {
         const room = booking.Room_Description;
-        const revenue = parseFloat(booking.Revenue) || 0;
-        const nights = parseInt(booking.Room_Nights) || 0;
+        const revenue = Number(booking.Revenue) || 0;
+        const nights = Number(booking.Room_Nights) || 0;
 
         if (!roomMap.has(room)) {
           roomMap.set(room, {
@@ -87,10 +80,17 @@ const RoomStatistics = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-full" />
-        <Skeleton className="h-8 w-full" />
-        <Skeleton className="h-8 w-full" />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {[...Array(6)].map((_, i) => (
+          <Card key={i}>
+            <CardHeader>
+              <Skeleton className="h-4 w-[250px]" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-20 w-full" />
+            </CardContent>
+          </Card>
+        ))}
       </div>
     );
   }
@@ -115,34 +115,41 @@ const RoomStatistics = () => {
         </div>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Room Name</TableHead>
-            <TableHead className="text-right">Total Revenue</TableHead>
-            <TableHead className="text-right">Average Rate</TableHead>
-            <TableHead className="text-right">Occupancy Rate</TableHead>
-            <TableHead className="text-right">Total Nights</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {roomStats && roomStats.map((stats) => (
-            <TableRow key={stats.roomDescription}>
-              <TableCell className="font-medium">{stats.roomDescription}</TableCell>
-              <TableCell className="text-right">
-                {formatCurrency(stats.totalRevenue)}
-              </TableCell>
-              <TableCell className="text-right">
-                {formatCurrency(stats.averageRate)}
-              </TableCell>
-              <TableCell className="text-right">
-                {stats.occupancyRate.toFixed(1)}%
-              </TableCell>
-              <TableCell className="text-right">{stats.totalNights}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {roomStats && roomStats.map((stats) => (
+          <Card key={stats.roomDescription}>
+            <CardHeader>
+              <CardTitle>{stats.roomDescription}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
+                  <p className="text-2xl font-bold">
+                    {formatCurrency(stats.totalRevenue)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Average Rate</p>
+                  <p className="text-2xl font-bold">
+                    {formatCurrency(stats.averageRate)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Occupancy Rate</p>
+                  <p className="text-2xl font-bold">
+                    {stats.occupancyRate.toFixed(1)}%
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total Nights</p>
+                  <p className="text-2xl font-bold">{stats.totalNights}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };
