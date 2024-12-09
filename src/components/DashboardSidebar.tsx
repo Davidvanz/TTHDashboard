@@ -24,7 +24,7 @@ export function DashboardSidebar() {
   return (
     <Sidebar>
       <SidebarContent>
-        <div className="p-6 flex flex-col items-center">
+        <div className="pt-8 px-6 pb-6 flex flex-col items-center">
           <img 
             src="/lovable-uploads/de099741-2aad-45da-b328-821900be6ce1.png" 
             alt="The Thatch House Logo" 
