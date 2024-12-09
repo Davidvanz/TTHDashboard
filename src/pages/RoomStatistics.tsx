@@ -22,7 +22,7 @@ const RoomStatistics = () => {
       console.log(`Fetching room statistics for year ${selectedYear}`);
       const { data, error } = await supabase
         .from("RevenueData_2023-2025")
-        .select("*")
+        .select("Room_Description, Arrival, Revenue")
         .like("Arrival", `${selectedYear}%`);
 
       if (error) {
@@ -38,7 +38,8 @@ const RoomStatistics = () => {
       data.forEach((booking) => {
         const room = booking.Room_Description;
         const revenue = Number(booking.Revenue) || 0;
-        const nights = Number(booking.Room_Nights) || 0;
+        // Calculate nights based on the presence of a booking
+        const nights = revenue > 0 ? 1 : 0; // Each booking counts as one night
 
         if (!roomMap.has(room)) {
           roomMap.set(room, {
