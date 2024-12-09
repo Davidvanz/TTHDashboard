@@ -17,20 +17,20 @@ const RoomStatistics = () => {
       console.log('Fetching room statistics...');
       const { data, error } = await supabase
         .from('RevenueData_2023-2025')
-        .select('Room_Description, Revenue, Arrival')
-        .order('Room_Description');
+        .select('Room_Description, Arrival, Revenue')
+        .not('Room_Description', 'is', null); // Ensure we only get rows with valid room descriptions
 
       if (error) {
         console.error('Error fetching room statistics:', error);
         throw error;
       }
 
+      console.log('Raw data from database:', data);
+
       // Process the data to get statistics per room
       const roomMap = new Map<string, RoomData>();
 
       data.forEach(booking => {
-        if (!booking.Room_Description) return;
-
         const existingData = roomMap.get(booking.Room_Description) || {
           Room_Description: booking.Room_Description,
           total_revenue: 0,
@@ -66,12 +66,16 @@ const RoomStatistics = () => {
     return <div className="p-8">Loading room statistics...</div>;
   }
 
+  if (!roomStats || roomStats.length === 0) {
+    return <div className="p-8">No room statistics available.</div>;
+  }
+
   return (
     <div className="p-8 space-y-8">
       <h1 className="text-3xl font-bold">Room Statistics</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {roomStats?.map((room) => (
+        {roomStats.map((room) => (
           <Card key={room.Room_Description} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="text-xl">{room.Room_Description}</CardTitle>
