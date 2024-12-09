@@ -37,13 +37,15 @@ const RoomStatistics = () => {
         throw error;
       }
 
+      console.log("Raw data from database:", data);
+
       // Group and calculate statistics by room
       const roomMap = new Map<string, RoomStats>();
       
       data.forEach((booking) => {
         const room = booking.Room_Description;
-        const revenue = booking.Revenue || 0;
-        const nights = booking.Room_Nights || 0;
+        const revenue = parseFloat(booking.Revenue) || 0;
+        const nights = parseInt(booking.Room_Nights) || 0;
 
         if (!roomMap.has(room)) {
           roomMap.set(room, {
@@ -58,14 +60,21 @@ const RoomStatistics = () => {
         const stats = roomMap.get(room)!;
         stats.totalRevenue += revenue;
         stats.totalNights += nights;
-        stats.averageRate = stats.totalRevenue / stats.totalNights;
-        // Assuming 365 days per year availability
+      });
+
+      // Calculate averages and rates after accumulating totals
+      roomMap.forEach((stats) => {
+        stats.averageRate = stats.totalNights > 0 ? stats.totalRevenue / stats.totalNights : 0;
+        // Calculate occupancy rate based on 365 days per year
         stats.occupancyRate = (stats.totalNights / 365) * 100;
       });
 
       // Convert map to array and sort by total revenue
-      return Array.from(roomMap.values())
+      const sortedStats = Array.from(roomMap.values())
         .sort((a, b) => b.totalRevenue - a.totalRevenue);
+
+      console.log("Processed room statistics:", sortedStats);
+      return sortedStats;
     },
   });
 
@@ -117,7 +126,7 @@ const RoomStatistics = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {roomStats?.map((stats) => (
+          {roomStats && roomStats.map((stats) => (
             <TableRow key={stats.roomDescription}>
               <TableCell className="font-medium">{stats.roomDescription}</TableCell>
               <TableCell className="text-right">
