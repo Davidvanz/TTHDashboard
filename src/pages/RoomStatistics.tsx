@@ -2,8 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DollarSign, TrendingUp, Bed } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DollarSign, TrendingUp, Bed } from "lucide-react";
 import { useState } from "react";
 
 interface RoomYearlyStats {
@@ -59,9 +59,11 @@ const RoomStatistics = () => {
   const yearlyTotals = roomStats.reduce((acc, curr) => ({
     total_revenue: acc.total_revenue + curr.total_revenue,
     total_room_nights: acc.total_room_nights + curr.total_room_nights,
+    occupancy_rate: curr.occupancy_rate, // We'll use the last room's occupancy rate as they should all be the same
   }), {
     total_revenue: 0,
     total_room_nights: 0,
+    occupancy_rate: 0,
   });
 
   return (
@@ -99,12 +101,12 @@ const RoomStatistics = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Occupancy</CardTitle>
+            <CardTitle className="text-sm font-medium">Occupancy Rate</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {Math.round(roomStats.reduce((acc, curr) => acc + curr.occupancy_rate, 0) / roomStats.length)}%
+              {yearlyTotals.occupancy_rate.toFixed(1)}%
             </div>
           </CardContent>
         </Card>
@@ -132,7 +134,7 @@ const RoomStatistics = () => {
                   <TableCell className="text-right">{formatCurrency(stat.total_revenue)}</TableCell>
                   <TableCell className="text-right">{stat.total_room_nights}</TableCell>
                   <TableCell className="text-right">{formatCurrency(stat.avg_daily_rate)}</TableCell>
-                  <TableCell className="text-right">{Math.round(stat.occupancy_rate)}%</TableCell>
+                  <TableCell className="text-right">{stat.occupancy_rate.toFixed(1)}%</TableCell>
                 </TableRow>
               ))}
             </TableBody>
