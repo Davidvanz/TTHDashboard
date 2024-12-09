@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DollarSign, Calendar, TrendingUp, Bed } from "lucide-react";
+import { DollarSign, TrendingUp, Bed } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 
@@ -58,11 +58,9 @@ const RoomStatistics = () => {
   // Calculate totals for the selected year
   const yearlyTotals = roomStats.reduce((acc, curr) => ({
     total_revenue: acc.total_revenue + curr.total_revenue,
-    total_bookings: acc.total_bookings + curr.total_bookings,
     total_room_nights: acc.total_room_nights + curr.total_room_nights,
   }), {
     total_revenue: 0,
-    total_bookings: 0,
     total_room_nights: 0,
   });
 
@@ -78,7 +76,7 @@ const RoomStatistics = () => {
         </Tabs>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -86,16 +84,6 @@ const RoomStatistics = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(yearlyTotals.total_revenue)}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{yearlyTotals.total_bookings}</div>
           </CardContent>
         </Card>
 
@@ -116,7 +104,7 @@ const RoomStatistics = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {(roomStats.reduce((acc, curr) => acc + curr.occupancy_rate, 0) / roomStats.length).toFixed(1)}%
+              {Math.round(roomStats.reduce((acc, curr) => acc + curr.occupancy_rate, 0) / roomStats.length)}%
             </div>
           </CardContent>
         </Card>
@@ -132,7 +120,6 @@ const RoomStatistics = () => {
               <TableRow>
                 <TableHead>Room</TableHead>
                 <TableHead className="text-right">Revenue</TableHead>
-                <TableHead className="text-right">Bookings</TableHead>
                 <TableHead className="text-right">Room Nights</TableHead>
                 <TableHead className="text-right">Avg. Daily Rate</TableHead>
                 <TableHead className="text-right">Occupancy Rate</TableHead>
@@ -143,10 +130,9 @@ const RoomStatistics = () => {
                 <TableRow key={stat.room_description}>
                   <TableCell className="font-medium">{stat.room_description}</TableCell>
                   <TableCell className="text-right">{formatCurrency(stat.total_revenue)}</TableCell>
-                  <TableCell className="text-right">{stat.total_bookings}</TableCell>
                   <TableCell className="text-right">{stat.total_room_nights}</TableCell>
                   <TableCell className="text-right">{formatCurrency(stat.avg_daily_rate)}</TableCell>
-                  <TableCell className="text-right">{stat.occupancy_rate}%</TableCell>
+                  <TableCell className="text-right">{Math.round(stat.occupancy_rate)}%</TableCell>
                 </TableRow>
               ))}
             </TableBody>
