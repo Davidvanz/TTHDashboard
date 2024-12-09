@@ -104,6 +104,14 @@ export type Database = {
       }
     }
     Views: {
+      booking_sources_by_year: {
+        Row: {
+          booking_com_total: number | null
+          direct_bookings_total: number | null
+          year: number | null
+        }
+        Relationships: []
+      }
       monthly_statistics: {
         Row: {
           Arrival_Month: string | null
