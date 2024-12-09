@@ -14,6 +14,12 @@ import {
   Legend,
 } from "recharts";
 
+type BookingSourcesData = {
+  year: number;
+  booking_com_total: number;
+  direct_bookings_total: number;
+};
+
 export const BookingSourcesComparison = () => {
   const [selectedYear, setSelectedYear] = useState<"2023" | "2024">("2024");
 
@@ -24,7 +30,7 @@ export const BookingSourcesComparison = () => {
       const { data, error } = await supabase
         .from('booking_sources_by_year')
         .select('*')
-        .eq('year', selectedYear)
+        .eq('year', parseInt(selectedYear))
         .single();
 
       if (error) {
@@ -33,7 +39,7 @@ export const BookingSourcesComparison = () => {
       }
       
       console.log('Booking sources data:', data);
-      return data;
+      return data as BookingSourcesData;
     },
   });
 
