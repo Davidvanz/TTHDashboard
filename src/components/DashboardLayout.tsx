@@ -3,6 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { supabase } from "@/integrations/supabase/client";
+import { Menu } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { MobileNav } from "./MobileNav";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
@@ -31,9 +35,24 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <DashboardSidebar />
-        <main className="flex-1 p-8 overflow-auto">
-          {children}
-        </main>
+        <div className="flex-1 flex flex-col">
+          <div className="md:hidden p-4 border-b">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Toggle navigation menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0">
+                <MobileNav />
+              </SheetContent>
+            </Sheet>
+          </div>
+          <main className="flex-1 p-8 overflow-auto">
+            {children}
+          </main>
+        </div>
       </div>
     </SidebarProvider>
   );
